@@ -1,5 +1,9 @@
 var BlockPuzzle = {
     Line: function() {
+        this.getElement = function() {
+            return self.element;
+        }
+
         this.setPoints = function(point1, point2) {
             self.element.setAttribute("x1", point1[0]);
             self.element.setAttribute("y1", point1[1]);
@@ -27,11 +31,35 @@ var BlockPuzzle = {
         this.element = document.createElementNS("http://www.w3.org/2000/svg", "line");
     },
 
-    Canvas: function(elementName) {
-        this.addObjectToDOM = function(object) {
-            self.element.appendChild(object.element);
+    Day: function(date, lastDayOfMonth) {
+        this.getElement = function() {
+            return self.getLine().getElement();
+        };
+
+        this.getLine = function() {
+            if (self.line !== null) {
+                return self.line;
+            }
+
+            self.line = new BlockPuzzle.Line();
+            if (self.lastDayOfMonth) {
+                self.line.setWidth(2);
+                self.line.setColor("rgba(100, 100, 100, 0.5)");
+            } else {
+                self.line.setWidth(1);
+                self.line.setColor("rgba(200, 200, 200, 0.4)");
+            }
+            return self.line;
         }
 
+        var self = this;
+        self.line = null;
+        self.date = date;
+        self.lastDayOfMonth = lastDayOfMonth;
+        self.element = null;
+    },
+
+    Canvas: function(elementName) {
         this.getDateOffsetXCoordinate = function(offset) {
             return (offset + 1) * self.dayWidth;
         }
@@ -43,16 +71,16 @@ var BlockPuzzle = {
 
             self.height = self.trackHeight * self.numberOfTracks;
             self.width = self.parentElement.clientWidth;
-            self.dayWidth = self.width / self.lines.length;
+            self.dayWidth = self.width / self.dates.length;
 
             self.element.style.width = self.width;
             self.element.style.height = self.height;
             self.element.setAttribute("viewBox", "0 0 " + self.width + " " + self.height);
 
-            for (var i = 0; i < self.lines.length; i++) {
+            for (var i = 0; i < self.dates.length; i++) {
                 var x = self.getDateOffsetXCoordinate(i);
-                self.lines[i].setVisible(self.dayWidth > 2);
-                self.lines[i].setPoints([x, 0], [x, self.height]);
+                self.dates[i].getLine().setVisible(self.dayWidth > 2);
+                self.dates[i].getLine().setPoints([x, 0], [x, self.height]);
             }
 
             for (var i = 0; i < self.tracks.length; i++) {
@@ -61,34 +89,26 @@ var BlockPuzzle = {
             }
         }
 
-        this.setDates = function(startDate, endDate) {
-            self.startDate = startDate;
-            self.endDate = endDate;
+        this.fillDatesArray = function() {
             self.dates = [];
             var currentDate = self.startDate;
             while (currentDate <= self.endDate) {
-                self.dates.push(currentDate);
-                currentDate = new Date(currentDate);
-                currentDate.setDate(currentDate.getDate() + 1);
+                var nextDate = new Date(currentDate);
+                nextDate.setDate(currentDate.getDate() + 1);
+
+                self.dates.push(new BlockPuzzle.Day(currentDate, nextDate.getDate() == 1));
+
+                currentDate = nextDate;
             }
+        }
 
-            self.lines = [];
+        this.setDates = function(startDate, endDate) {
+            self.startDate = startDate;
+            self.endDate = endDate;
+            self.fillDatesArray();
+
             for (var i = 0; i < self.dates.length; i++) {
-                var date = self.dates[i];
-                var line = new BlockPuzzle.Line();
-                var lastDayOfMonth = i != self.dates.length - 1 &&
-                                     self.dates[i + 1].getDate() == 1;
-
-                if (lastDayOfMonth) {
-                    line.setWidth(2);
-                    line.setColor("rgba(100, 100, 100, 0.5)");
-                } else {
-                    line.setWidth(1);
-                    line.setColor("rgba(200, 200, 200, 0.4)");
-                }
-
-                self.lines.push(line);
-                self.addObjectToDOM(line);
+                self.element.appendChild(self.dates[i].getElement());
             }
 
             self.handleSizeChange();
@@ -109,7 +129,7 @@ var BlockPuzzle = {
             track.setWidth(2);
             track.setColor("rgb(256, 100, 100)");
             self.tracks.push(track);
-            self.addObjectToDOM(track);
+            self.element.appendChild(track.getElement());
         }
 
         self.setDates(new Date(2014, 1, 1, 0, 0, 0, 0),

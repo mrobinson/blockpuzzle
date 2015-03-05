@@ -79,8 +79,10 @@ var BlockPuzzle = {
 
             for (var i = 0; i < self.dates.length; i++) {
                 var x = self.getDateOffsetXCoordinate(i);
-                self.dates[i].getLine().setVisible(self.dayWidth > 2);
-                self.dates[i].getLine().setPoints([x, 0], [x, self.height]);
+                var date = self.dates[i];
+                var line = self.dates[i].getLine();
+                line.setVisible(date.lastDayOfMonth || self.dayWidth > 2);
+                line.setPoints([x, 0], [x, self.height]);
             }
 
             for (var i = 0; i < self.tracks.length; i++) {

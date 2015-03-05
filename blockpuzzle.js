@@ -32,6 +32,10 @@ var BlockPuzzle = {
             self.element.appendChild(object.element);
         }
 
+        this.getDateOffsetXCoordinate = function(offset) {
+            return (offset + 1) * self.dayWidth;
+        }
+
         this.handleSizeChange = function(object) {
             if (self.width == self.parentElement.clientWidth) {
                 return;
@@ -39,16 +43,16 @@ var BlockPuzzle = {
 
             self.height = self.trackHeight * self.numberOfTracks;
             self.width = self.parentElement.clientWidth;
+            self.dayWidth = self.width / self.lines.length;
 
             self.element.style.width = self.width;
             self.element.style.height = self.height;
             self.element.setAttribute("viewBox", "0 0 " + self.width + " " + self.height);
 
-            var dayLineDistance = self.width / self.lines.length;
             for (var i = 0; i < self.lines.length; i++) {
-                var lineX = (i + 1) * dayLineDistance;
-                self.lines[i].setVisible(dayLineDistance > 2);
-                self.lines[i].setPoints([lineX, 0], [lineX, self.height]);
+                var x = self.getDateOffsetXCoordinate(i);
+                self.lines[i].setVisible(self.dayWidth > 2);
+                self.lines[i].setPoints([x, 0], [x, self.height]);
             }
 
             for (var i = 0; i < self.tracks.length; i++) {

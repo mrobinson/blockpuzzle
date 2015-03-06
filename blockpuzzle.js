@@ -1,4 +1,6 @@
 var BlockPuzzle = {
+    TRACK_HEIGHT: 40,
+    RESERVATION_PADDING: 1,
     Line: function() {
         this.getElement = function() {
             return self.element;
@@ -32,31 +34,32 @@ var BlockPuzzle = {
     },
 
     Day: function(date, lastDayOfMonth) {
-        this.getElement = function() {
-            return self.getLine().getElement();
-        };
-
-        this.getLine = function() {
-            if (self.line !== null) {
-                return self.line;
+        this.buildDOM = function(container) {
+            if (self.line === null) {
+                self.line = new BlockPuzzle.Line();
+                if (self.lastDayOfMonth) {
+                    self.line.setWidth(2);
+                    self.line.setColor("rgba(100, 100, 100, 0.5)");
+                } else {
+                    self.line.setWidth(1);
+                    self.line.setColor("rgba(200, 200, 200, 0.4)");
+                }
             }
 
-            self.line = new BlockPuzzle.Line();
-            if (self.lastDayOfMonth) {
-                self.line.setWidth(2);
-                self.line.setColor("rgba(100, 100, 100, 0.5)");
-            } else {
-                self.line.setWidth(1);
-                self.line.setColor("rgba(200, 200, 200, 0.4)");
-            }
-            return self.line;
+            container.appendChild(self.line.getElement());
+        }
+
+        this.positionAndSizeElements = function(canvas, dayIndex) {
+            var x = canvas.getDateOffsetXCoordinate(dayIndex);
+            self.line.setVisible(self.lastDayOfMonth || canvas.dayWidth > 2);
+            self.line.setPoints([x, 0], [x, canvas.height]);
+
         }
 
         var self = this;
         self.line = null;
         self.date = date;
         self.lastDayOfMonth = lastDayOfMonth;
-        self.element = null;
     },
 
     Reservation: function(name, start, end) {
@@ -66,26 +69,28 @@ var BlockPuzzle = {
         // Normalize dates to all be at midnight.
         self.start = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
         self.end = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 0, 0, 0, 0);
+        self.element = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     },
 
     Track: function(name) {
-        this.getElement = function() {
-            return self.getLine().getElement();
-        };
-
-        this.getLine = function() {
-            if (self.line !== null) {
-                return self.line;
+        this.buildDOM = function(container) {
+            if (self.line === null) {
+                self.line = new BlockPuzzle.Line();
+                self.line.setWidth(2);
+                self.line.setColor("rgb(256, 100, 100)");
             }
-
-            self.line = new BlockPuzzle.Line();
-            self.line.setWidth(2);
-            self.line.setColor("rgb(256, 100, 100)");
-            return self.line;
+            container.appendChild(self.line.getElement());
         }
 
         this.addReservation = function(reservation) {
             this.reservations.push(reservation);
+        }
+
+        this.positionAndSizeElements = function(canvas, trackIndex) {
+            var lineY = (trackIndex + 1) * BlockPuzzle.TRACK_HEIGHT;
+            self.line.setVisible(trackIndex != canvas.tracks.length - 1);
+            self.line.setPoints([0, lineY], [canvas.width, lineY]);
+
         }
 
         var self = this;
@@ -99,12 +104,12 @@ var BlockPuzzle = {
             return (offset + 1) * self.dayWidth;
         }
 
-        this.handleSizeChange = function(object) {
-            if (self.width == self.parentElement.clientWidth) {
+        this.positionAndSizeElements = function(object) {
+            if (self.width == self.parentElement.clientWidth &&
+                self.height == self.parentElement.clientHeight)
                 return;
-            }
 
-            self.height = self.trackHeight * self.tracks.length;
+            self.height = BlockPuzzle.TRACK_HEIGHT * self.tracks.length;
             self.width = self.parentElement.clientWidth;
             self.dayWidth = self.width / self.dates.length;
 
@@ -113,18 +118,11 @@ var BlockPuzzle = {
             self.element.setAttribute("viewBox", "0 0 " + self.width + " " + self.height);
 
             for (var i = 0; i < self.dates.length; i++) {
-                var x = self.getDateOffsetXCoordinate(i);
-                var date = self.dates[i];
-                var line = self.dates[i].getLine();
-                line.setVisible(date.lastDayOfMonth || self.dayWidth > 2);
-                line.setPoints([x, 0], [x, self.height]);
+                self.dates[i].positionAndSizeElements(canvas, i);
             }
 
             for (var i = 0; i < self.tracks.length; i++) {
-                var lineY = (i + 1) * self.trackHeight;
-                var line = self.tracks[i].getLine();
-                line.setVisible(i != self.tracks.length - 1);
-                line.setPoints([0, lineY], [self.width, lineY]);
+                self.tracks[i].positionAndSizeElements(canvas, i);
             }
         }
 
@@ -139,11 +137,6 @@ var BlockPuzzle = {
 
                 currentDate = nextDate;
             }
-        }
-
-        this.addTrack = function(track) {
-            self.element.appendChild(track.getElement());
-            self.tracks.push(track);
         }
 
         this.calculateStartAndEndDates = function(data) {
@@ -168,10 +161,6 @@ var BlockPuzzle = {
             }
 
             self.fillDatesArray();
-
-            for (var i = 0; i < self.dates.length; i++) {
-                self.element.appendChild(self.dates[i].getElement());
-            }
         }
 
         this.setData = function(data) {
@@ -183,24 +172,38 @@ var BlockPuzzle = {
                                                                      reservation[1],
                                                                      reservation[2]));
                 }
-                self.addTrack(track);
+                self.tracks.push(track);
             }
 
             self.calculateStartAndEndDates();
-            self.handleSizeChange();
+
+            self.buildDOM();
+            self.positionAndSizeElements();
+        }
+
+        this.buildDOM = function() {
+            while (self.element.firstChild) {
+                self.element.removeChild(self.element.firstChild);
+            }
+
+            for (var i = 0; i < self.dates.length; i++) {
+                self.dates[i].buildDOM(self.element);
+            }
+
+            for (var i = 0; i < self.tracks.length; i++) {
+                self.tracks[i].buildDOM(self.element);
+            }
         }
 
         var self = this;
-        self.parentElement = document.getElementById(elementName);
-        self.element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-
-        self.trackHeight = 40;
         self.tracks = [];
 
+        self.parentElement = document.getElementById(elementName);
+        self.element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         self.parentElement.appendChild(this.element);
 
         window.onresize = function() {
-            self.handleSizeChange();
+            self.positionAndSizeElements();
         }
     },
 }

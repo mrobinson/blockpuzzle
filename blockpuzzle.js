@@ -1,6 +1,7 @@
 var BlockPuzzle = {
     TRACK_HEIGHT: 40,
-    TRACK_BORDER_WIDTH: 2,
+    TRACK_BORDER_WIDTH: 1,
+    TRACK_GAP: 5,
     RESERVATION_PADDING: 2,
 
     Line: function() {
@@ -198,7 +199,8 @@ var BlockPuzzle = {
                 self.height == self.parentElement.clientHeight)
                 return;
 
-            self.height = BlockPuzzle.TRACK_HEIGHT * self.tracks.length;
+            var heightBetweenTracks = BlockPuzzle.TRACK_HEIGHT + BlockPuzzle.TRACK_GAP;
+            self.height = heightBetweenTracks * self.tracks.length - BlockPuzzle.TRACK_GAP;
             self.width = self.parentElement.clientWidth;
             self.dayWidth = self.width / self.dates.length;
 
@@ -211,7 +213,7 @@ var BlockPuzzle = {
             }
 
             for (var i = 0; i < self.tracks.length; i++) {
-                self.tracks[i].setOrigin([0, BlockPuzzle.TRACK_HEIGHT * i]);
+                self.tracks[i].setOrigin([0, heightBetweenTracks * i]);
                 self.tracks[i].setSize([canvas.width, BlockPuzzle.TRACK_HEIGHT]);
                 self.tracks[i].positionAndSizeElements(canvas);
             }

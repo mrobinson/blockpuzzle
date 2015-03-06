@@ -111,33 +111,43 @@ var BlockPuzzle = {
 
     Track: function(name) {
         this.buildDOM = function(container) {
+            if (self.element === null) {
+                self.element = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            }
+            container.appendChild(self.element);
+
             if (self.line === null) {
                 self.line = new BlockPuzzle.Line();
                 self.line.setWidth(2);
                 self.line.setColor("rgb(256, 100, 100)");
             }
-            container.appendChild(self.line.getElement());
+            this.element.appendChild(self.line.getElement());
 
             for (var i = 0; i < self.reservations.length; i++)
-                self.reservations[i].buildDOM(container);
+                self.reservations[i].buildDOM(self.element);
         };
 
         this.addReservation = function(reservation) {
             this.reservations.push(reservation);
         }
 
+        this.setOrigin = function(origin) {
+            this.origin = origin;
+        }
+
         this.positionAndSizeElements = function(canvas, trackIndex) {
-            var lineY = (trackIndex + 1) * BlockPuzzle.TRACK_HEIGHT;
+            self.element.setAttribute("transform",
+                "translate(" + self.origin[0] + "," + self.origin[1] + ")");
+
             self.line.setVisible(trackIndex != canvas.tracks.length - 1);
-            self.line.setPoints([0, lineY], [canvas.width, lineY]);
+            self.line.setPoints([0, BlockPuzzle.TRACK_HEIGHT],
+                                [canvas.width, BlockPuzzle.TRACK_HEIGHT]);
 
             var numReservations = self.reservations.length;
             var totalPadding = numReservations * 2 * BlockPuzzle.RESERVATION_PADDING;
             var reservationHeight = (BlockPuzzle.TRACK_HEIGHT - totalPadding) / numReservations;
             var totalDrawnHeight = (numReservations * reservationHeight) + totalPadding;
-            var offset =
-                (trackIndex * BlockPuzzle.TRACK_HEIGHT) +
-                ((BlockPuzzle.TRACK_HEIGHT - totalDrawnHeight) / 2);
+            var offset = ((BlockPuzzle.TRACK_HEIGHT - totalDrawnHeight) / 2);
 
             for (var i = 0; i < numReservations; i++) {
                 offset += BlockPuzzle.RESERVATION_PADDING;
@@ -154,7 +164,9 @@ var BlockPuzzle = {
         }
 
         var self = this;
+        this.origin = [0, 0];
         this.name = name;
+        this.element = null;
         this.line = null;
         this.reservations = [];
     },
@@ -193,6 +205,7 @@ var BlockPuzzle = {
             }
 
             for (var i = 0; i < self.tracks.length; i++) {
+                self.tracks[i].setOrigin([0, BlockPuzzle.TRACK_HEIGHT * i]);
                 self.tracks[i].positionAndSizeElements(canvas, i);
             }
         }

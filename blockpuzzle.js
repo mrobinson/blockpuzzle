@@ -59,7 +59,16 @@ var BlockPuzzle = {
         self.element = null;
     },
 
-    Track: function() {
+    Reservation: function(name, start, end) {
+        var self = this;
+        self.name = name;
+
+        // Normalize dates to all be at midnight.
+        self.start = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
+        self.end = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 0, 0, 0, 0);
+    },
+
+    Track: function(name) {
         this.getElement = function() {
             return self.getLine().getElement();
         };
@@ -75,8 +84,14 @@ var BlockPuzzle = {
             return self.line;
         }
 
+        this.addReservation = function(reservation) {
+            this.reservations.push(reservation);
+        }
+
         var self = this;
+        this.name = name;
         this.line = null;
+        this.reservations = [];
     },
 
     Canvas: function(elementName) {
@@ -89,7 +104,7 @@ var BlockPuzzle = {
                 return;
             }
 
-            self.height = self.trackHeight * self.numberOfTracks;
+            self.height = self.trackHeight * self.tracks.length;
             self.width = self.parentElement.clientWidth;
             self.dayWidth = self.width / self.dates.length;
 
@@ -126,15 +141,52 @@ var BlockPuzzle = {
             }
         }
 
-        this.setDates = function(startDate, endDate) {
-            self.startDate = startDate;
-            self.endDate = endDate;
+        this.addTrack = function(track) {
+            self.element.appendChild(track.getElement());
+            self.tracks.push(track);
+        }
+
+        this.calculateStartAndEndDates = function(data) {
+            self.startDate = null;
+            self.endDate = null;
+
+            for (var i = 0; i < self.tracks.length; i++) {
+                var reservations = self.tracks[i].reservations;
+                for (var j = 0; j < reservations.length; j++) {
+                    var reservation = reservations[j];
+
+                    if (self.startDate === null || self.startDate > reservation.startDate) {
+                        self.startDate =
+                            new Date(reservation.start.getFullYear(), 0, 1, 0, 0, 0, 0);
+                    }
+
+                    if (self.endDate === null || self.endDate < reservation.endDate) {
+                        self.endDate =
+                            new Date(reservation.end.getFullYear(), 11, 31, 0, 0, 0, 0);
+                    }
+                }
+            }
+
             self.fillDatesArray();
 
             for (var i = 0; i < self.dates.length; i++) {
                 self.element.appendChild(self.dates[i].getElement());
             }
+        }
 
+        this.setData = function(data) {
+            for (var i = 0; i < data.length; i++) {
+                var track = new BlockPuzzle.Track(data[i].name);
+                for (var j = 0; j < data[i].reservations.length; j++) {
+                    var reservation = data[i].reservations[j];
+                    track.addReservation(new BlockPuzzle.Reservation(reservation[0],
+                                                                     reservation[1],
+                                                                     reservation[2]));
+                }
+                self.addTrack(track);
+            }
+
+            self.calculateStartAndEndDates();
             self.handleSizeChange();
         }
 
@@ -143,21 +195,7 @@ var BlockPuzzle = {
         self.element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
         self.trackHeight = 40;
-        self.numberOfTracks = 10;
-        self.dayLines = [];
-        self.weekLines = [];
-
         self.tracks = [];
-        for (var i = 0; i < self.numberOfTracks; i++) {
-            var track = new BlockPuzzle.Track();
-            self.element.appendChild(track.getElement());
-            self.tracks.push(track);
-        }
-
-        self.setDates(new Date(2014, 1, 1, 0, 0, 0, 0),
-                      new Date(2014, 12, 31, 0, 0, 0, 0));
-
-        self.handleSizeChange();
 
         self.parentElement.appendChild(this.element);
 

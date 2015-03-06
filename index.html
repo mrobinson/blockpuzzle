@@ -7,6 +7,23 @@
 <div id="canvas" style="width: 100%; border: 1px solid black;"></div>
     <script>
     var canvas = new BlockPuzzle.Canvas("canvas");
+    canvas.setData(
+        [
+            {
+                'name': 'Person1',
+                'reservations': [
+                    ['Project1', new Date(2014, 6, 1, 0, 0, 0, 0), new Date(2014, 8, 30, 0, 0, 0, 0)],
+                    ['Project2', new Date(2014, 7, 1, 0, 0, 0, 0), new Date(2014, 8, 30, 0, 0, 0, 0)],
+                ]
+            },
+            {
+                'name': 'Person2',
+                'reservations': [
+                    ['Project3', new Date(2014, 2, 12, 0, 0, 0, 0), new Date(2014, 8, 30, 0, 0, 0, 0)],
+                    ['Project4', new Date(2014, 7, 1, 0, 0, 0, 0), new Date(2014, 11, 6, 0, 0, 0, 0)],
+                ]
+            }
+        ]);
     </script>
 </body>
 <html>

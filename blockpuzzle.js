@@ -1,10 +1,10 @@
 var BlockPuzzle = {
     TRACK_HEIGHT: 40,
-    RESERVATION_PADDING: 1,
+    RESERVATION_PADDING: 2,
     Line: function() {
         this.getElement = function() {
             return self.element;
-        }
+        };
 
         this.setPoints = function(point1, point2) {
             self.element.setAttribute("x1", point1[0]);
@@ -15,11 +15,11 @@ var BlockPuzzle = {
 
         this.setWidth = function(width) {
             self.element.setAttribute("stroke-width", width);
-        }
+        };
 
         this.setColor = function(color) {
             self.element.setAttribute("stroke", color);
-        }
+        };
 
         this.setVisible = function(visible) {
             if (visible) {
@@ -27,10 +27,33 @@ var BlockPuzzle = {
             } else {
                 self.element.setAttribute("visibility", "hidden");
             }
-        }
+        };
 
         var self = this;
         this.element = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    },
+
+    Rect: function() {
+        this.getElement = function() {
+            return self.element;
+        };
+
+        this.setOrigin = function(origin) {
+            self.element.setAttribute("x", origin[0]);
+            self.element.setAttribute("y", origin[1]);
+        };
+
+        this.setSize = function(size) {
+            self.element.setAttribute("width", size[0]);
+            self.element.setAttribute("height", size[1]);
+        };
+
+        this.setColor = function(color) {
+            self.element.style.background = color;
+        };
+
+        var self = this;
+        self.element = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     },
 
     Day: function(date, lastDayOfMonth) {
@@ -53,7 +76,12 @@ var BlockPuzzle = {
             var x = canvas.getDateOffsetXCoordinate(dayIndex);
             self.line.setVisible(self.lastDayOfMonth || canvas.dayWidth > 2);
             self.line.setPoints([x, 0], [x, canvas.height]);
+        }
 
+        this.containsDate = function(date) {
+            return date.getFullYear() == self.date.getFullYear() &&
+                   date.getMonth() == self.date.getMonth() &&
+                   date.getDate() == self.date.getDate();
         }
 
         var self = this;
@@ -63,13 +91,22 @@ var BlockPuzzle = {
     },
 
     Reservation: function(name, start, end) {
+        this.buildDOM = function(container) {
+            if (self.rect === null) {
+                self.rect = new BlockPuzzle.Rect();
+                self.rect.setColor("rgba(100, 256, 100, 1)");
+            }
+
+            container.appendChild(self.rect.getElement());
+        }
+
         var self = this;
         self.name = name;
 
         // Normalize dates to all be at midnight.
         self.start = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
         self.end = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 0, 0, 0, 0);
-        self.element = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        self.rect = null;
     },
 
     Track: function(name) {
@@ -80,7 +117,10 @@ var BlockPuzzle = {
                 self.line.setColor("rgb(256, 100, 100)");
             }
             container.appendChild(self.line.getElement());
-        }
+
+            for (var i = 0; i < self.reservations.length; i++)
+                self.reservations[i].buildDOM(container);
+        };
 
         this.addReservation = function(reservation) {
             this.reservations.push(reservation);
@@ -91,6 +131,26 @@ var BlockPuzzle = {
             self.line.setVisible(trackIndex != canvas.tracks.length - 1);
             self.line.setPoints([0, lineY], [canvas.width, lineY]);
 
+            var numReservations = self.reservations.length;
+            var totalPadding = numReservations * 2 * BlockPuzzle.RESERVATION_PADDING;
+            var reservationHeight = (BlockPuzzle.TRACK_HEIGHT - totalPadding) / numReservations;
+            var totalDrawnHeight = (numReservations * reservationHeight) + totalPadding;
+            var offset =
+                (trackIndex * BlockPuzzle.TRACK_HEIGHT) +
+                ((BlockPuzzle.TRACK_HEIGHT - totalDrawnHeight) / 2);
+
+            for (var i = 0; i < numReservations; i++) {
+                offset += BlockPuzzle.RESERVATION_PADDING;
+
+                var reservation = self.reservations[i];
+                var x = canvas.getDateXCoordinate(reservation.start) - canvas.dayWidth;
+                var width = canvas.getDateXCoordinate(reservation.end) - x;
+
+                reservation.rect.setOrigin([x, offset]);
+                reservation.rect.setSize([width, reservationHeight]);
+
+                offset += reservationHeight + BlockPuzzle.RESERVATION_PADDING;
+            }
         }
 
         var self = this;
@@ -102,6 +162,17 @@ var BlockPuzzle = {
     Canvas: function(elementName) {
         this.getDateOffsetXCoordinate = function(offset) {
             return (offset + 1) * self.dayWidth;
+        }
+
+        this.getDateXCoordinate = function(date) {
+            // Expensive way to calculate the date offset in our date range, that avoids
+            // tricky calculations involving daylight savings time.
+            for (var i = 0; i < self.dates.length; i++) {
+                if (self.dates[i].containsDate(date))
+                    return self.getDateOffsetXCoordinate(i);
+            }
+            console.error("Could not get offset for date: " + date);
+            return 0;
         }
 
         this.positionAndSizeElements = function(object) {

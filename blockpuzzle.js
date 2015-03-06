@@ -1,6 +1,8 @@
 var BlockPuzzle = {
     TRACK_HEIGHT: 40,
+    TRACK_BORDER_WIDTH: 2,
     RESERVATION_PADDING: 2,
+
     Line: function() {
         this.getElement = function() {
             return self.element;
@@ -118,7 +120,7 @@ var BlockPuzzle = {
             if (self.rect === null) {
                 self.rect = new BlockPuzzle.Rect();
                 self.rect.setFill("rgba(0, 0, 0, 0)");
-                self.rect.setStroke(1, "rgb(256, 0, 0)");
+                self.rect.setStroke(BlockPuzzle.TRACK_BORDER_WIDTH, "rgb(256, 0, 0)");
             }
             this.transform.appendChild(self.rect.getElement());
 
@@ -146,10 +148,11 @@ var BlockPuzzle = {
             self.rect.setSize([self.size[0], self.size[1]]);
 
             var numReservations = self.reservations.length;
-            var totalPadding = 2 + numReservations * 2 * BlockPuzzle.RESERVATION_PADDING;
+            var totalPadding = (2 * BlockPuzzle.TRACK_BORDER_WIDTH) +
+                                numReservations * 2 * BlockPuzzle.RESERVATION_PADDING;
             var reservationHeight = (self.size[1] - totalPadding) / numReservations;
             var totalDrawnHeight = (numReservations * reservationHeight) + totalPadding;
-            var offset = ((self.size[1] - totalDrawnHeight) / 2) + 1;
+            var offset = ((self.size[1] - totalDrawnHeight) / 2) + BlockPuzzle.TRACK_BORDER_WIDTH;
 
             for (var i = 0; i < numReservations; i++) {
                 offset += BlockPuzzle.RESERVATION_PADDING;

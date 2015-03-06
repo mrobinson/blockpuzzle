@@ -13,12 +13,9 @@ var BlockPuzzle = {
             self.element.setAttribute("y2", point2[1]);
         };
 
-        this.setWidth = function(width) {
-            self.element.setAttribute("stroke-width", width);
-        };
-
-        this.setColor = function(color) {
+        this.setStroke = function(width, color) {
             self.element.setAttribute("stroke", color);
+            self.element.setAttribute("stroke-width", width);
         };
 
         this.setVisible = function(visible) {
@@ -48,8 +45,13 @@ var BlockPuzzle = {
             self.element.setAttribute("height", size[1]);
         };
 
-        this.setColor = function(color) {
-            self.element.style.background = color;
+        this.setFill = function(fill) {
+            self.element.style.fill = fill;
+        };
+
+        this.setStroke = function(width, color) {
+            self.element.setAttribute("stroke", color);
+            self.element.setAttribute("stroke-width", width);
         };
 
         var self = this;
@@ -60,13 +62,10 @@ var BlockPuzzle = {
         this.buildDOM = function(container) {
             if (self.line === null) {
                 self.line = new BlockPuzzle.Line();
-                if (self.lastDayOfMonth) {
-                    self.line.setWidth(2);
-                    self.line.setColor("rgba(100, 100, 100, 0.5)");
-                } else {
-                    self.line.setWidth(1);
-                    self.line.setColor("rgba(200, 200, 200, 0.4)");
-                }
+                if (self.lastDayOfMonth)
+                    self.line.setStroke(2, "rgba(100, 100, 100, 0.5)");
+                else
+                    self.line.setStroke(1, "rgba(200, 200, 200, 0.4)");
             }
 
             container.appendChild(self.line.getElement());
@@ -94,7 +93,7 @@ var BlockPuzzle = {
         this.buildDOM = function(container) {
             if (self.rect === null) {
                 self.rect = new BlockPuzzle.Rect();
-                self.rect.setColor("rgba(100, 256, 100, 1)");
+                self.rect.setFill("rgba(150, 150, 150, 1)");
             }
 
             container.appendChild(self.rect.getElement());
@@ -111,20 +110,20 @@ var BlockPuzzle = {
 
     Track: function(name) {
         this.buildDOM = function(container) {
-            if (self.element === null) {
-                self.element = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            if (self.transform === null) {
+                self.transform = document.createElementNS("http://www.w3.org/2000/svg", "g");
             }
-            container.appendChild(self.element);
+            container.appendChild(self.transform);
 
-            if (self.line === null) {
-                self.line = new BlockPuzzle.Line();
-                self.line.setWidth(2);
-                self.line.setColor("rgb(256, 100, 100)");
+            if (self.rect === null) {
+                self.rect = new BlockPuzzle.Rect();
+                self.rect.setFill("rgba(0, 0, 0, 0)");
+                self.rect.setStroke(1, "rgb(256, 0, 0)");
             }
-            this.element.appendChild(self.line.getElement());
+            this.transform.appendChild(self.rect.getElement());
 
             for (var i = 0; i < self.reservations.length; i++)
-                self.reservations[i].buildDOM(self.element);
+                self.reservations[i].buildDOM(self.transform);
         };
 
         this.addReservation = function(reservation) {
@@ -136,18 +135,17 @@ var BlockPuzzle = {
         }
 
         this.positionAndSizeElements = function(canvas, trackIndex) {
-            self.element.setAttribute("transform",
+            self.transform.setAttribute("transform",
                 "translate(" + self.origin[0] + "," + self.origin[1] + ")");
 
-            self.line.setVisible(trackIndex != canvas.tracks.length - 1);
-            self.line.setPoints([0, BlockPuzzle.TRACK_HEIGHT],
-                                [canvas.width, BlockPuzzle.TRACK_HEIGHT]);
+            self.rect.setOrigin([0, 0]);
+            self.rect.setSize([canvas.width, BlockPuzzle.TRACK_HEIGHT]);
 
             var numReservations = self.reservations.length;
-            var totalPadding = numReservations * 2 * BlockPuzzle.RESERVATION_PADDING;
+            var totalPadding = 2 + numReservations * 2 * BlockPuzzle.RESERVATION_PADDING;
             var reservationHeight = (BlockPuzzle.TRACK_HEIGHT - totalPadding) / numReservations;
             var totalDrawnHeight = (numReservations * reservationHeight) + totalPadding;
-            var offset = ((BlockPuzzle.TRACK_HEIGHT - totalDrawnHeight) / 2);
+            var offset = ((BlockPuzzle.TRACK_HEIGHT - totalDrawnHeight) / 2) + 1;
 
             for (var i = 0; i < numReservations; i++) {
                 offset += BlockPuzzle.RESERVATION_PADDING;
@@ -166,8 +164,8 @@ var BlockPuzzle = {
         var self = this;
         this.origin = [0, 0];
         this.name = name;
-        this.element = null;
-        this.line = null;
+        this.transform = null;
+        this.rect = null;
         this.reservations = [];
     },
 

@@ -93,15 +93,6 @@ var BlockPuzzle = {
     },
 
     Reservation: function(name, start, end) {
-        this.buildDOM = function(container) {
-            if (self.rect === null) {
-                self.rect = new BlockPuzzle.Rect();
-                self.rect.setFill("rgba(150, 150, 150, 1)");
-            }
-
-            container.appendChild(self.rect.getElement());
-        }
-
         var self = this;
         self.name = name;
 
@@ -111,8 +102,61 @@ var BlockPuzzle = {
         self.rect = null;
     },
 
-    Track: function(name) {
+    Slice: function(start, end) {
         this.buildDOM = function(container) {
+            this.rects = [];
+            for (var i = 0; i < this.reservations.length; i++) {
+                var rect = new BlockPuzzle.Rect();
+                rect.setFill("rgba(150, 150, 150, 1)");
+                this.rects.push(rect);
+                container.appendChild(rect.getElement());
+            }
+        }
+
+        this.containsReservation = function(reservation) {
+            return reservation.end >= this.start && reservation.start < this.end;
+        }
+
+        this.start = start;
+        this.end = end;
+        this.reservations = [];
+        this.rects = [];
+    },
+
+    Track: function(name) {
+        this.buildSlices = function(container) {
+            var dates = [];
+            for (var i = 0; i < this.reservations.length; i++) {
+                dates.push(this.reservations[i].start);
+
+                var end = new Date(this.reservations[i].end);
+                end.setDate(end.getDate() + 1);
+                dates.push(end);
+            }
+
+            dates.sort(function(date1, date2) {
+                return date1 > date2;
+            });
+
+            for (var i = 1; i < dates.length; i++) {
+                if (dates[i-1].getTime() == dates[i].getTime())
+                    continue;
+                this.slices.push(new BlockPuzzle.Slice(dates[i-1], dates[i]));
+            }
+
+            for (var i = 0; i < this.reservations.length; i++) {
+                var reservation = this.reservations[i];
+                for (var j = 0; j < this.slices.length; j++) {
+                    if (this.slices[j].containsReservation(reservation)) {
+                        this.slices[j].reservations.push(reservation);
+                    }
+                }
+            }
+        }
+
+        this.buildDOM = function(container) {
+            this.buildSlices();
+
             if (self.transform === null) {
                 self.transform = document.createElementNS("http://www.w3.org/2000/svg", "g");
             }
@@ -125,8 +169,8 @@ var BlockPuzzle = {
             }
             this.transform.appendChild(self.rect.getElement());
 
-            for (var i = 0; i < self.reservations.length; i++)
-                self.reservations[i].buildDOM(self.transform);
+            for (var i = 0; i < self.slices.length; i++)
+                self.slices[i].buildDOM(self.transform);
         };
 
         this.addReservation = function(reservation) {
@@ -141,6 +185,28 @@ var BlockPuzzle = {
             this.size = size;
         }
 
+        this.positionAndSizeElementsForSlice = function(canvas, slice) {
+            var numReservations = slice.rects.length;
+            var totalPadding = (2 * BlockPuzzle.TRACK_BORDER_WIDTH) +
+                                numReservations * 2 * BlockPuzzle.RESERVATION_PADDING;
+            var reservationHeight = (self.size[1] - totalPadding) / numReservations;
+            var totalDrawnHeight = (numReservations * reservationHeight) + totalPadding;
+            var offset = ((self.size[1] - totalDrawnHeight) / 2) + BlockPuzzle.TRACK_BORDER_WIDTH;
+
+            var x = canvas.getDateXCoordinate(slice.start) - canvas.dayWidth;
+            var width = canvas.getDateXCoordinate(slice.end) - x;
+
+            for (var i = 0; i < numReservations; i++) {
+                offset += BlockPuzzle.RESERVATION_PADDING;
+
+                slice.rects[i].setOrigin([x, offset]);
+                slice.rects[i].setSize([width, reservationHeight]);
+
+                offset += reservationHeight + BlockPuzzle.RESERVATION_PADDING;
+            }
+
+        }
+
         this.positionAndSizeElements = function(canvas) {
             self.transform.setAttribute("transform",
                 "translate(" + self.origin[0] + "," + self.origin[1] + ")");
@@ -148,24 +214,8 @@ var BlockPuzzle = {
             self.rect.setOrigin([0, 0]);
             self.rect.setSize([self.size[0], self.size[1]]);
 
-            var numReservations = self.reservations.length;
-            var totalPadding = (2 * BlockPuzzle.TRACK_BORDER_WIDTH) +
-                                numReservations * 2 * BlockPuzzle.RESERVATION_PADDING;
-            var reservationHeight = (self.size[1] - totalPadding) / numReservations;
-            var totalDrawnHeight = (numReservations * reservationHeight) + totalPadding;
-            var offset = ((self.size[1] - totalDrawnHeight) / 2) + BlockPuzzle.TRACK_BORDER_WIDTH;
-
-            for (var i = 0; i < numReservations; i++) {
-                offset += BlockPuzzle.RESERVATION_PADDING;
-
-                var reservation = self.reservations[i];
-                var x = canvas.getDateXCoordinate(reservation.start) - canvas.dayWidth;
-                var width = canvas.getDateXCoordinate(reservation.end) - x;
-
-                reservation.rect.setOrigin([x, offset]);
-                reservation.rect.setSize([width, reservationHeight]);
-
-                offset += reservationHeight + BlockPuzzle.RESERVATION_PADDING;
+            for (var i = 0; i < this.slices.length; i++) {
+                self.positionAndSizeElementsForSlice(canvas, this.slices[i]);
             }
         }
 
@@ -176,6 +226,7 @@ var BlockPuzzle = {
         this.transform = null;
         this.rect = null;
         this.reservations = [];
+        this.slices = []
     },
 
     Canvas: function(elementName) {

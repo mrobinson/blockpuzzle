@@ -113,6 +113,24 @@ var BlockPuzzle = {
             }
         }
 
+        this.positionAndSizeElements = function(canvas) {
+            var numReservations = this.rects.length;
+            var totalPadding = (2 * BlockPuzzle.TRACK_BORDER_WIDTH) +
+                                numReservations * 2 * BlockPuzzle.RESERVATION_PADDING;
+            var reservationHeight = (this.size[1] - totalPadding) / numReservations;
+            var totalDrawnHeight = (numReservations * reservationHeight) + totalPadding;
+            var offset = ((this.size[1] - totalDrawnHeight) / 2) + BlockPuzzle.TRACK_BORDER_WIDTH;
+
+            for (var i = 0; i < numReservations; i++) {
+                offset += BlockPuzzle.RESERVATION_PADDING;
+
+                this.rects[i].setOrigin([this.origin[0], offset]);
+                this.rects[i].setSize([this.size[0], reservationHeight]);
+
+                offset += reservationHeight + BlockPuzzle.RESERVATION_PADDING;
+            }
+        }
+
         this.containsReservation = function(reservation) {
             return reservation.end >= this.start && reservation.start < this.end;
         }
@@ -121,6 +139,8 @@ var BlockPuzzle = {
         this.end = end;
         this.reservations = [];
         this.rects = [];
+        this.size = null;
+        this.origin = null;
     },
 
     Track: function(name) {
@@ -177,36 +197,6 @@ var BlockPuzzle = {
             this.reservations.push(reservation);
         }
 
-        this.setOrigin = function(origin) {
-            this.origin = origin;
-        }
-
-        this.setSize = function(size) {
-            this.size = size;
-        }
-
-        this.positionAndSizeElementsForSlice = function(canvas, slice) {
-            var numReservations = slice.rects.length;
-            var totalPadding = (2 * BlockPuzzle.TRACK_BORDER_WIDTH) +
-                                numReservations * 2 * BlockPuzzle.RESERVATION_PADDING;
-            var reservationHeight = (self.size[1] - totalPadding) / numReservations;
-            var totalDrawnHeight = (numReservations * reservationHeight) + totalPadding;
-            var offset = ((self.size[1] - totalDrawnHeight) / 2) + BlockPuzzle.TRACK_BORDER_WIDTH;
-
-            var x = canvas.getDateXCoordinate(slice.start) - canvas.dayWidth;
-            var width = canvas.getDateXCoordinate(slice.end) - x;
-
-            for (var i = 0; i < numReservations; i++) {
-                offset += BlockPuzzle.RESERVATION_PADDING;
-
-                slice.rects[i].setOrigin([x, offset]);
-                slice.rects[i].setSize([width, reservationHeight]);
-
-                offset += reservationHeight + BlockPuzzle.RESERVATION_PADDING;
-            }
-
-        }
-
         this.positionAndSizeElements = function(canvas) {
             self.transform.setAttribute("transform",
                 "translate(" + self.origin[0] + "," + self.origin[1] + ")");
@@ -215,7 +205,13 @@ var BlockPuzzle = {
             self.rect.setSize([self.size[0], self.size[1]]);
 
             for (var i = 0; i < this.slices.length; i++) {
-                self.positionAndSizeElementsForSlice(canvas, this.slices[i]);
+                var slice = this.slices[i];
+                var x = canvas.getDateXCoordinate(slice.start) - canvas.dayWidth;
+                var width = canvas.getDateXCoordinate(slice.end) - x;
+
+                slice.origin = [x, this.origin[1]];
+                slice.size = [width, BlockPuzzle.TRACK_HEIGHT];
+                slice.positionAndSizeElements(canvas);
             }
         }
 
@@ -264,8 +260,8 @@ var BlockPuzzle = {
             }
 
             for (var i = 0; i < self.tracks.length; i++) {
-                self.tracks[i].setOrigin([0, heightBetweenTracks * i]);
-                self.tracks[i].setSize([canvas.width, BlockPuzzle.TRACK_HEIGHT]);
+                self.tracks[i].origin = [0, heightBetweenTracks * i];
+                self.tracks[i].size = [canvas.width, BlockPuzzle.TRACK_HEIGHT];
                 self.tracks[i].positionAndSizeElements(canvas);
             }
         }

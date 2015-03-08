@@ -2,7 +2,7 @@ var BlockPuzzle = {
     TRACK_HEIGHT: 40,
     TRACK_BORDER_WIDTH: 1,
     TRACK_GAP: 5,
-    RESERVATION_PADDING: 2,
+    RESERVATION_PADDING: 1,
 
     Line: function() {
         this.getElement = function() {
@@ -39,14 +39,28 @@ var BlockPuzzle = {
         };
 
         this.setOrigin = function(origin) {
+            this.origin = origin;
             self.element.setAttribute("x", origin[0]);
             self.element.setAttribute("y", origin[1]);
         };
 
         this.setSize = function(size) {
+            this.size = size;
             self.element.setAttribute("width", size[0]);
             self.element.setAttribute("height", size[1]);
         };
+
+        this.topRight = function(size) {
+            return [this.origin[0] + this.size[0], this.origin[1]];
+        }
+
+        this.bottomRight = function(size) {
+            return [this.origin[0] + this.size[0], this.origin[1] + this.size[1]];
+        }
+
+        this.bottomLeft = function(size) {
+            return [this.origin[0], this.origin[1] + this.size[1]];
+        }
 
         this.setFill = function(fill) {
             self.element.style.fill = fill;
@@ -59,6 +73,8 @@ var BlockPuzzle = {
 
         var self = this;
         self.element = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        this.origin = [0, 0]
+        this.size = [0, 0]
     },
 
     Day: function(date, lastDayOfMonth) {
@@ -107,7 +123,7 @@ var BlockPuzzle = {
             this.rects = [];
             for (var i = 0; i < this.reservations.length; i++) {
                 var rect = new BlockPuzzle.Rect();
-                rect.setFill("rgba(150, 150, 150, 1)");
+                rect.setFill("rgba(50, 150, 150, 1)");
                 this.rects.push(rect);
                 container.appendChild(rect.getElement());
             }
@@ -128,6 +144,35 @@ var BlockPuzzle = {
                 this.rects[i].setSize([this.size[0], reservationHeight]);
 
                 offset += reservationHeight + BlockPuzzle.RESERVATION_PADDING;
+            }
+        }
+
+        this.fixupReservationConnections = function(previousSlice) {
+            for (var i = 0; i < previousSlice.reservations.length; i++) {
+                for (var j = 0; j < this.reservations.length; j++) {
+                    if (this.reservations[j] != previousSlice.reservations[i])
+                        continue;
+
+                    var rightRect = this.rects[j];
+                    var leftRect = previousSlice.rects[i];
+                    var smallRight = rightRect.size[1] < leftRect.size[1];
+
+                    if (smallRight) {
+                        leftRect.setSize([leftRect.size[0] - 10, leftRect.size[1]]);
+                    } else {
+                        rightRect.setOrigin([rightRect.origin[0] + 10, rightRect.origin[1]]);
+                        rightRect.setSize([rightRect.size[0] - 10, rightRect.size[1]]);
+                    }
+
+                    var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("d",
+                        "M " + leftRect.topRight().join(" ") + " " +
+                        "L " + rightRect.origin.join(" ") + " " +
+                        "L " + rightRect.bottomLeft().join(" ") +
+                        "L " + leftRect.bottomRight().join(" "));
+                    path.setAttribute("fill", "rgba(50, 150, 150, 1)");
+                    leftRect.getElement().parentElement.appendChild(path);
+                }
             }
         }
 
@@ -212,6 +257,10 @@ var BlockPuzzle = {
                 slice.origin = [x, this.origin[1]];
                 slice.size = [width, BlockPuzzle.TRACK_HEIGHT];
                 slice.positionAndSizeElements(canvas);
+            }
+
+            for (var i = 1; i < self.slices.length; i++) {
+                self.slices[i].fixupReservationConnections(self.slices[i - 1]);
             }
         }
 

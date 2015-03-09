@@ -406,4 +406,135 @@ var BlockPuzzle = {
             this_.positionAndSizeElements();
         }
     },
+
+    getDateForQuarter: function(quarterNumber, quarterYear, lastDay) {
+        if (!lastDay) {
+            return new Date(quarterYear, (quarterNumber - 1) * 3, 1, 0, 0, 0, 0)
+        } else {
+            // The day field is 1-indexed, so selecting zero as the day
+            // should create a date representing the last day of the previous
+            // month.
+            return new Date(quarterYear, quarterNumber * 3, 0, 0, 0, 0, 0)
+        }
+    },
+
+    convertTextToData: function(text) {
+        var lines = text.split("\n");
+        var data = {tracks: []};
+        var settingRegex = /^(\w+):([^\n]*)$/;
+        var trackRegex = /^\s*\*([^\n]+)$/;
+        var reservationRegex = /^\s*-([^:]+):\s*([^\n]*)\s*$/;
+        var currentTrack = null;
+
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].replace("\n", "");
+
+            var settingMatch = settingRegex.exec(line);
+            if (settingMatch) {
+                var key = settingMatch[1].toLowerCase().trim();
+                var value = settingMatch[2].trim();
+                data[key] = value;
+                continue;
+            }
+
+            var trackMatch = trackRegex.exec(line);
+            if (trackMatch) {
+                var trackName = trackMatch[1].trim();
+                if (trackName.length == 0)
+                    continue;
+
+                currentTrack = { name: trackName, reservations: [] };
+                data['tracks'].push(currentTrack);
+                continue;
+            }
+
+            var reservationMatch = reservationRegex.exec(line);
+            if (reservationMatch) {
+                if (currentTrack === null) {
+                    console.error("Couldn't add reservation, because no current Track.");
+                    continue;
+                }
+                var reservationName = reservationMatch[1].trim();
+                if (reservationName.length == 0)
+                    continue;
+
+                var dateRangeString = reservationMatch[2].trim();
+                var dates = BlockPuzzle.dateRangeToDates(dateRangeString);
+                if (dates == null) {
+                    console.error("Couldn't parse date range string '" + dateRangeString + "'");
+                    continue;
+                }
+                currentTrack['reservations'].push({
+                    name: reservationName,
+                    start: dates[0],
+                    end: dates[1],
+                });
+            }
+        }
+
+        return data;
+    },
+
+    dateStringToDate: function(dateString) {
+        var fullDateRegex = /^([0-9][0-9]?)\/([0-9][0-9]?)\/([0-9][0-9][0-9][0-9])/;
+        var match = fullDateRegex.exec(dateString);
+        if (match) {
+            return new Date(Number.parseInt(match[3]),
+                            Number.parseInt(match[2]) - 1, // Month is zero-indexed.
+                            Number.parseInt(match[1]),
+                            0, 0, 0, 0)
+        }
+
+        var quarterRegex = /^Q([1,2,3,4])\/([0-9][0-9][0-9][0-9])/;
+        var match = quarterRegex.exec(dateString);
+        if (match) {
+            return BlockPuzzle.getDateForQuarter(Number.parseInt(match[1]),
+                                                 Number.parseInt(match[2]),
+                                                 false);
+        }
+
+        return null;
+    },
+
+    dateRangeToDates: function(dateString) {
+        var quarterRangeRegex = /Q([1,2,3,4])\/([0-9][0-9][0-9][0-9])\s*-\s*Q([1,2,3,4])\/([0-9][0-9][0-9][0-9])/;
+        var match = quarterRangeRegex.exec(dateString);
+        if (match) {
+            var quarter1 = Number.parseInt(match[1]);
+            var year1 = Number.parseInt(match[2]);
+            var quarter2 = Number.parseInt(match[3]);
+            var year2 = Number.parseInt(match[4]);
+            var start = BlockPuzzle.getDateForQuarter(quarter1, year1, false);
+            var end = BlockPuzzle.getDateForQuarter(quarter2, year2, true);
+            if (start > end) { // Reverse range.
+                var start = BlockPuzzle.getDateForQuarter(quarter2, year2, false);
+                var end = BlockPuzzle.getDateForQuarter(quarter1, year1, true);
+            }
+
+            return [start, end];
+        }
+
+        var rangeRegex = /([^-]+)-([^-]+)/;
+        var match = rangeRegex.exec(dateString);
+        if (match) {
+            var date1 = BlockPuzzle.dateStringToDate(match[1].trim());
+            var date2 = BlockPuzzle.dateStringToDate(match[2].trim());
+            if (date1 > date2)
+                return [date2, date1];
+            else
+                return [date1, date2];
+        }
+
+
+        var quarterRegex = /Q([1,2,3,4])\/([0-9][0-9][0-9][0-9])/;
+        var match = quarterRegex.exec(dateString);
+        if (match) {
+            var quarter = Number.parseInt(match[1]);
+            var year = Number.parseInt(match[2]);
+            return [BlockPuzzle.getDateForQuarter(quarter, year, false),
+                    BlockPuzzle.getDateForQuarter(quarter, year, true)];
+        }
+
+        return null;
+    }
 }

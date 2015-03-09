@@ -110,27 +110,65 @@ var BlockPuzzle = {
 
     Reservation: function(name, start, end) {
         var self = this;
+
+        this.buildDOM = function(container) {
+            if (this.path == null)
+                this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            container.appendChild(this.path);
+        }
+
+        this.positionAndSizeElements = function(canvas) {
+            var pathString = "M " + this.topPoints[0].join(" ") + " ";
+            for (var j = 1; j < this.topPoints.length; j++) {
+                pathString += "L " + this.topPoints[j].join(" ") + " ";
+            }
+
+            for (var j = this.bottomPoints.length - 1; j >= 0; j--) {
+                pathString += "L " + this.bottomPoints[j].join(" ") + " ";
+            }
+
+            this.path.setAttribute("d", pathString);
+            this.path.setAttribute("fill", "rgba(150, 0, 0, 1)");
+            this.topPoints = [];
+            this.bottomPoints = [];
+        },
+
+        this.addPoints = function(topPoint, bottomPoint) {
+            this.topPoints.push(topPoint);
+            this.bottomPoints.push(bottomPoint);
+
+            var numberOfPoints = this.topPoints.length;
+            if (numberOfPoints == 1)
+                return;
+
+            var previousTop = this.topPoints[numberOfPoints - 2];
+            var previousBottom = this.bottomPoints[numberOfPoints - 2];
+            var leftHeight = previousBottom[1] - previousTop[1];
+            var rightHeight = bottomPoint[1] - topPoint[1];
+            if (leftHeight == rightHeight)
+                return;
+
+            if (leftHeight > rightHeight)
+                var meetingPoint = previousTop[0] -= 7;
+            else
+                var meetingPoint = topPoint[0] += 7;
+
+            previousTop[0] = previousBottom[0] = topPoint[0] = bottomPoint[0] = meetingPoint;
+        }
+
         self.name = name;
 
         // Normalize dates to all be at midnight.
         self.start = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
         self.end = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 0, 0, 0, 0);
-        self.rect = null;
+        self.topPoints = [];
+        self.bottomPoints = [];
+        this.path = null;
     },
 
     Slice: function(start, end) {
-        this.buildDOM = function(container) {
-            this.rects = [];
-            for (var i = 0; i < this.reservations.length; i++) {
-                var rect = new BlockPuzzle.Rect();
-                rect.setFill("rgba(50, 150, 150, 1)");
-                this.rects.push(rect);
-                container.appendChild(rect.getElement());
-            }
-        }
-
-        this.positionAndSizeElements = function(canvas) {
-            var numReservations = this.rects.length;
+        this.addPointsToReservations = function() {
+            var numReservations = this.reservations.length;
             var totalPadding = (2 * BlockPuzzle.TRACK_BORDER_WIDTH) +
                                 numReservations * 2 * BlockPuzzle.RESERVATION_PADDING;
             var reservationHeight = (this.size[1] - totalPadding) / numReservations;
@@ -140,39 +178,12 @@ var BlockPuzzle = {
             for (var i = 0; i < numReservations; i++) {
                 offset += BlockPuzzle.RESERVATION_PADDING;
 
-                this.rects[i].setOrigin([this.origin[0], offset]);
-                this.rects[i].setSize([this.size[0], reservationHeight]);
+                this.reservations[i].addPoints([this.origin[0], offset],
+                                               [this.origin[0], offset + reservationHeight]);
+                this.reservations[i].addPoints([this.origin[0] + this.size[0], offset],
+                                               [this.origin[0] + this.size[0], offset + reservationHeight]);
 
                 offset += reservationHeight + BlockPuzzle.RESERVATION_PADDING;
-            }
-        }
-
-        this.fixupReservationConnections = function(previousSlice) {
-            for (var i = 0; i < previousSlice.reservations.length; i++) {
-                for (var j = 0; j < this.reservations.length; j++) {
-                    if (this.reservations[j] != previousSlice.reservations[i])
-                        continue;
-
-                    var rightRect = this.rects[j];
-                    var leftRect = previousSlice.rects[i];
-                    var smallRight = rightRect.size[1] < leftRect.size[1];
-
-                    if (smallRight) {
-                        leftRect.setSize([leftRect.size[0] - 10, leftRect.size[1]]);
-                    } else {
-                        rightRect.setOrigin([rightRect.origin[0] + 10, rightRect.origin[1]]);
-                        rightRect.setSize([rightRect.size[0] - 10, rightRect.size[1]]);
-                    }
-
-                    var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    path.setAttribute("d",
-                        "M " + leftRect.topRight().join(" ") + " " +
-                        "L " + rightRect.origin.join(" ") + " " +
-                        "L " + rightRect.bottomLeft().join(" ") +
-                        "L " + leftRect.bottomRight().join(" "));
-                    path.setAttribute("fill", "rgba(50, 150, 150, 1)");
-                    leftRect.getElement().parentElement.appendChild(path);
-                }
             }
         }
 
@@ -183,7 +194,6 @@ var BlockPuzzle = {
         this.start = start;
         this.end = end;
         this.reservations = [];
-        this.rects = [];
         this.size = null;
         this.origin = null;
     },
@@ -220,11 +230,9 @@ var BlockPuzzle = {
         }
 
         this.buildDOM = function(container) {
-            this.buildSlices();
-
-            if (self.transform === null) {
+            if (self.transform === null)
                 self.transform = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            }
+
             container.appendChild(self.transform);
 
             if (self.rect === null) {
@@ -232,14 +240,16 @@ var BlockPuzzle = {
                 self.rect.setFill("rgba(0, 0, 0, 0)");
                 self.rect.setStroke(BlockPuzzle.TRACK_BORDER_WIDTH, "rgb(256, 0, 0)");
             }
+
             this.transform.appendChild(self.rect.getElement());
 
-            for (var i = 0; i < self.slices.length; i++)
-                self.slices[i].buildDOM(self.transform);
+            for (var i = 0; i < self.reservations.length; i++)
+                self.reservations[i].buildDOM(this.transform);
         };
 
-        this.addReservation = function(reservation) {
-            this.reservations.push(reservation);
+        this.setReservations = function(reservations) {
+            this.reservations  = reservations;
+            this.buildSlices();
         }
 
         this.positionAndSizeElements = function(canvas) {
@@ -256,12 +266,13 @@ var BlockPuzzle = {
 
                 slice.origin = [x, this.origin[1]];
                 slice.size = [width, BlockPuzzle.TRACK_HEIGHT];
-                slice.positionAndSizeElements(canvas);
+                slice.addPointsToReservations();
             }
 
-            for (var i = 1; i < self.slices.length; i++) {
-                self.slices[i].fixupReservationConnections(self.slices[i - 1]);
+            for (var i = 0; i < self.reservations.length; i++) {
+                self.reservations[i].positionAndSizeElements();
             }
+
         }
 
         var self = this;
@@ -355,12 +366,14 @@ var BlockPuzzle = {
         this.setData = function(data) {
             for (var i = 0; i < data.length; i++) {
                 var track = new BlockPuzzle.Track(data[i].name);
+                var reservations = [];
                 for (var j = 0; j < data[i].reservations.length; j++) {
                     var reservation = data[i].reservations[j];
-                    track.addReservation(new BlockPuzzle.Reservation(reservation[0],
-                                                                     reservation[1],
-                                                                     reservation[2]));
+                    reservations.push(new BlockPuzzle.Reservation(reservation[0],
+                                                                  reservation[1],
+                                                                  reservation[2]));
                 }
+                track.setReservations(reservations);
                 self.tracks.push(track);
             }
 

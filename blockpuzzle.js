@@ -6,48 +6,47 @@ var BlockPuzzle = {
 
     Line: function() {
         this.getElement = function() {
-            return self.element;
+            return this.element;
         };
 
         this.setPoints = function(point1, point2) {
-            self.element.setAttribute("x1", point1[0]);
-            self.element.setAttribute("y1", point1[1]);
-            self.element.setAttribute("x2", point2[0]);
-            self.element.setAttribute("y2", point2[1]);
+            this.element.setAttribute("x1", point1[0]);
+            this.element.setAttribute("y1", point1[1]);
+            this.element.setAttribute("x2", point2[0]);
+            this.element.setAttribute("y2", point2[1]);
         };
 
         this.setStroke = function(width, color) {
-            self.element.setAttribute("stroke", color);
-            self.element.setAttribute("stroke-width", width);
+            this.element.setAttribute("stroke", color);
+            this.element.setAttribute("stroke-width", width);
         };
 
         this.setVisible = function(visible) {
             if (visible) {
-                self.element.setAttribute("visibility", "visible");
+                this.element.setAttribute("visibility", "visible");
             } else {
-                self.element.setAttribute("visibility", "hidden");
+                this.element.setAttribute("visibility", "hidden");
             }
         };
 
-        var self = this;
         this.element = document.createElementNS("http://www.w3.org/2000/svg", "line");
     },
 
     Rect: function() {
         this.getElement = function() {
-            return self.element;
+            return this.element;
         };
 
         this.setOrigin = function(origin) {
             this.origin = origin;
-            self.element.setAttribute("x", origin[0]);
-            self.element.setAttribute("y", origin[1]);
+            this.element.setAttribute("x", origin[0]);
+            this.element.setAttribute("y", origin[1]);
         };
 
         this.setSize = function(size) {
             this.size = size;
-            self.element.setAttribute("width", size[0]);
-            self.element.setAttribute("height", size[1]);
+            this.element.setAttribute("width", size[0]);
+            this.element.setAttribute("height", size[1]);
         };
 
         this.topRight = function(size) {
@@ -63,54 +62,50 @@ var BlockPuzzle = {
         }
 
         this.setFill = function(fill) {
-            self.element.style.fill = fill;
+            this.element.style.fill = fill;
         };
 
         this.setStroke = function(width, color) {
-            self.element.setAttribute("stroke", color);
-            self.element.setAttribute("stroke-width", width);
+            this.element.setAttribute("stroke", color);
+            this.element.setAttribute("stroke-width", width);
         };
 
-        var self = this;
-        self.element = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        this.element = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         this.origin = [0, 0]
         this.size = [0, 0]
     },
 
     Day: function(date, lastDayOfMonth) {
         this.buildDOM = function(container) {
-            if (self.line === null) {
-                self.line = new BlockPuzzle.Line();
-                if (self.lastDayOfMonth)
-                    self.line.setStroke(2, "rgba(100, 100, 100, 0.5)");
+            if (this.line === null) {
+                this.line = new BlockPuzzle.Line();
+                if (this.lastDayOfMonth)
+                    this.line.setStroke(2, "rgba(100, 100, 100, 0.5)");
                 else
-                    self.line.setStroke(1, "rgba(200, 200, 200, 0.4)");
+                    this.line.setStroke(1, "rgba(200, 200, 200, 0.4)");
             }
 
-            container.appendChild(self.line.getElement());
+            container.appendChild(this.line.getElement());
         }
 
         this.positionAndSizeElements = function(canvas, dayIndex) {
             var x = canvas.getDateOffsetXCoordinate(dayIndex);
-            self.line.setVisible(self.lastDayOfMonth || canvas.dayWidth > 2);
-            self.line.setPoints([x, 0], [x, canvas.height]);
+            this.line.setVisible(this.lastDayOfMonth || canvas.dayWidth > 2);
+            this.line.setPoints([x, 0], [x, canvas.height]);
         }
 
         this.containsDate = function(date) {
-            return date.getFullYear() == self.date.getFullYear() &&
-                   date.getMonth() == self.date.getMonth() &&
-                   date.getDate() == self.date.getDate();
+            return date.getFullYear() == this.date.getFullYear() &&
+                   date.getMonth() == this.date.getMonth() &&
+                   date.getDate() == this.date.getDate();
         }
 
-        var self = this;
-        self.line = null;
-        self.date = date;
-        self.lastDayOfMonth = lastDayOfMonth;
+        this.line = null;
+        this.date = date;
+        this.lastDayOfMonth = lastDayOfMonth;
     },
 
     Reservation: function(name, start, end) {
-        var self = this;
-
         this.buildDOM = function(container) {
             if (this.path == null)
                 this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -156,13 +151,13 @@ var BlockPuzzle = {
             previousTop[0] = previousBottom[0] = topPoint[0] = bottomPoint[0] = meetingPoint;
         }
 
-        self.name = name;
+        this.name = name;
 
         // Normalize dates to all be at midnight.
-        self.start = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
-        self.end = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 0, 0, 0, 0);
-        self.topPoints = [];
-        self.bottomPoints = [];
+        this.start = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
+        this.end = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 0, 0, 0, 0);
+        this.topPoints = [];
+        this.bottomPoints = [];
         this.path = null;
     },
 
@@ -230,21 +225,21 @@ var BlockPuzzle = {
         }
 
         this.buildDOM = function(container) {
-            if (self.transform === null)
-                self.transform = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            if (this.transform === null)
+                this.transform = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
-            container.appendChild(self.transform);
+            container.appendChild(this.transform);
 
-            if (self.rect === null) {
-                self.rect = new BlockPuzzle.Rect();
-                self.rect.setFill("rgba(0, 0, 0, 0)");
-                self.rect.setStroke(BlockPuzzle.TRACK_BORDER_WIDTH, "rgb(256, 0, 0)");
+            if (this.rect === null) {
+                this.rect = new BlockPuzzle.Rect();
+                this.rect.setFill("rgba(0, 0, 0, 0)");
+                this.rect.setStroke(BlockPuzzle.TRACK_BORDER_WIDTH, "rgb(256, 0, 0)");
             }
 
-            this.transform.appendChild(self.rect.getElement());
+            this.transform.appendChild(this.rect.getElement());
 
-            for (var i = 0; i < self.reservations.length; i++)
-                self.reservations[i].buildDOM(this.transform);
+            for (var i = 0; i < this.reservations.length; i++)
+                this.reservations[i].buildDOM(this.transform);
         };
 
         this.setReservations = function(reservations) {
@@ -253,11 +248,11 @@ var BlockPuzzle = {
         }
 
         this.positionAndSizeElements = function(canvas) {
-            self.transform.setAttribute("transform",
-                "translate(" + self.origin[0] + "," + self.origin[1] + ")");
+            this.transform.setAttribute("transform",
+                "translate(" + this.origin[0] + "," + this.origin[1] + ")");
 
-            self.rect.setOrigin([0, 0]);
-            self.rect.setSize([self.size[0], self.size[1]]);
+            this.rect.setOrigin([0, 0]);
+            this.rect.setSize([this.size[0], this.size[1]]);
 
             for (var i = 0; i < this.slices.length; i++) {
                 var slice = this.slices[i];
@@ -269,13 +264,12 @@ var BlockPuzzle = {
                 slice.addPointsToReservations();
             }
 
-            for (var i = 0; i < self.reservations.length; i++) {
-                self.reservations[i].positionAndSizeElements();
+            for (var i = 0; i < this.reservations.length; i++) {
+                this.reservations[i].positionAndSizeElements();
             }
 
         }
 
-        var self = this;
         this.origin = [0, 0];
         this.size = [0, 0];
         this.name = name;
@@ -287,80 +281,80 @@ var BlockPuzzle = {
 
     Canvas: function(elementName) {
         this.getDateOffsetXCoordinate = function(offset) {
-            return (offset + 1) * self.dayWidth;
+            return (offset + 1) * this.dayWidth;
         }
 
         this.getDateXCoordinate = function(date) {
             // Expensive way to calculate the date offset in our date range, that avoids
             // tricky calculations involving daylight savings time.
-            for (var i = 0; i < self.dates.length; i++) {
-                if (self.dates[i].containsDate(date))
-                    return self.getDateOffsetXCoordinate(i);
+            for (var i = 0; i < this.dates.length; i++) {
+                if (this.dates[i].containsDate(date))
+                    return this.getDateOffsetXCoordinate(i);
             }
             console.error("Could not get offset for date: " + date);
             return 0;
         }
 
         this.positionAndSizeElements = function(object) {
-            if (self.width == self.parentElement.clientWidth &&
-                self.height == self.parentElement.clientHeight)
+            if (this.width == this.parentElement.clientWidth &&
+                this.height == this.parentElement.clientHeight)
                 return;
 
             var heightBetweenTracks = BlockPuzzle.TRACK_HEIGHT + BlockPuzzle.TRACK_GAP;
-            self.height = heightBetweenTracks * self.tracks.length - BlockPuzzle.TRACK_GAP;
-            self.width = self.parentElement.clientWidth;
-            self.dayWidth = self.width / self.dates.length;
+            this.height = heightBetweenTracks * this.tracks.length - BlockPuzzle.TRACK_GAP;
+            this.width = this.parentElement.clientWidth;
+            this.dayWidth = this.width / this.dates.length;
 
-            self.element.style.width = self.width;
-            self.element.style.height = self.height;
-            self.element.setAttribute("viewBox", "0 0 " + self.width + " " + self.height);
+            this.element.style.width = this.width;
+            this.element.style.height = this.height;
+            this.element.setAttribute("viewBox", "0 0 " + this.width + " " + this.height);
 
-            for (var i = 0; i < self.dates.length; i++) {
-                self.dates[i].positionAndSizeElements(canvas, i);
+            for (var i = 0; i < this.dates.length; i++) {
+                this.dates[i].positionAndSizeElements(canvas, i);
             }
 
-            for (var i = 0; i < self.tracks.length; i++) {
-                self.tracks[i].origin = [0, heightBetweenTracks * i];
-                self.tracks[i].size = [canvas.width, BlockPuzzle.TRACK_HEIGHT];
-                self.tracks[i].positionAndSizeElements(canvas);
+            for (var i = 0; i < this.tracks.length; i++) {
+                this.tracks[i].origin = [0, heightBetweenTracks * i];
+                this.tracks[i].size = [canvas.width, BlockPuzzle.TRACK_HEIGHT];
+                this.tracks[i].positionAndSizeElements(canvas);
             }
         }
 
         this.fillDatesArray = function() {
-            self.dates = [];
-            var currentDate = self.startDate;
-            while (currentDate <= self.endDate) {
+            this.dates = [];
+            var currentDate = this.startDate;
+            while (currentDate <= this.endDate) {
                 var nextDate = new Date(currentDate);
                 nextDate.setDate(currentDate.getDate() + 1);
 
-                self.dates.push(new BlockPuzzle.Day(currentDate, nextDate.getDate() == 1));
+                this.dates.push(new BlockPuzzle.Day(currentDate, nextDate.getDate() == 1));
 
                 currentDate = nextDate;
             }
         }
 
         this.calculateStartAndEndDates = function(data) {
-            self.startDate = null;
-            self.endDate = null;
+            this.startDate = null;
+            this.endDate = null;
 
-            for (var i = 0; i < self.tracks.length; i++) {
-                var reservations = self.tracks[i].reservations;
+            for (var i = 0; i < this.tracks.length; i++) {
+                var reservations = this.tracks[i].reservations;
                 for (var j = 0; j < reservations.length; j++) {
                     var reservation = reservations[j];
 
-                    if (self.startDate === null || self.startDate > reservation.startDate) {
-                        self.startDate =
+                    if (this.startDate === null || this.startDate > reservation.startDate) {
+                        this.startDate =
                             new Date(reservation.start.getFullYear(), 0, 1, 0, 0, 0, 0);
                     }
 
-                    if (self.endDate === null || self.endDate < reservation.endDate) {
-                        self.endDate =
+                    if (this.endDate === null || this.endDate < reservation.endDate) {
+                        this.endDate =
                             new Date(reservation.end.getFullYear(), 11, 31, 0, 0, 0, 0);
                     }
                 }
             }
 
-            self.fillDatesArray();
+            this.fillDatesArray();
         }
 
         this.setData = function(data) {
@@ -374,38 +368,38 @@ var BlockPuzzle = {
                                                                   reservation[2]));
                 }
                 track.setReservations(reservations);
-                self.tracks.push(track);
+                this.tracks.push(track);
             }
 
-            self.calculateStartAndEndDates();
+            this.calculateStartAndEndDates();
 
-            self.buildDOM();
-            self.positionAndSizeElements();
+            this.buildDOM();
+            this.positionAndSizeElements();
         }
 
         this.buildDOM = function() {
-            while (self.element.firstChild) {
-                self.element.removeChild(self.element.firstChild);
+            while (this.element.firstChild) {
+                this.element.removeChild(this.element.firstChild);
             }
 
-            for (var i = 0; i < self.dates.length; i++) {
-                self.dates[i].buildDOM(self.element);
+            for (var i = 0; i < this.dates.length; i++) {
+                this.dates[i].buildDOM(this.element);
             }
 
-            for (var i = 0; i < self.tracks.length; i++) {
-                self.tracks[i].buildDOM(self.element);
+            for (var i = 0; i < this.tracks.length; i++) {
+                this.tracks[i].buildDOM(this.element);
             }
         }
 
-        var self = this;
-        self.tracks = [];
+        this.tracks = [];
 
-        self.parentElement = document.getElementById(elementName);
-        self.element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        self.parentElement.appendChild(this.element);
+        this.parentElement = document.getElementById(elementName);
+        this.element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        this.parentElement.appendChild(this.element);
 
+        var this_ = this;
         window.onresize = function() {
-            self.positionAndSizeElements();
+            this_.positionAndSizeElements();
         }
     },
 }

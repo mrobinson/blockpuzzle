@@ -143,12 +143,16 @@ var BlockPuzzle = {
             if (leftHeight == rightHeight)
                 return;
 
-            if (leftHeight > rightHeight)
-                var meetingPoint = previousTop[0] -= 7;
-            else
-                var meetingPoint = topPoint[0] += 7;
+            if (leftHeight > rightHeight) {
+                var rightPoint = previousTop[0] - 5;
+                var leftPoint = previousTop[0] - 8;
+            } else {
+                var rightPoint = topPoint[0] + 8;
+                var leftPoint = topPoint[0] + 5;
+            }
 
-            previousTop[0] = previousBottom[0] = topPoint[0] = bottomPoint[0] = meetingPoint;
+            previousTop[0] = previousBottom[0] = leftPoint;
+            topPoint[0] = bottomPoint[0] = rightPoint;
         }
 
         this.name = name;

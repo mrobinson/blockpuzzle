@@ -1,0 +1,3 @@
+{ "name" : "blockpuzzle"
+, "version" : "0.0.1"
+, "dependencies" : { "qunitjs" : "1.17.1" } }

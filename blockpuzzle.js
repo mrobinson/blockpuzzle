@@ -358,18 +358,24 @@ var BlockPuzzle = {
                 }
             }
 
+            if (this.startDate === null || this.endDate === null) {
+                console.warn("No valid data, not building dates array.");
+                return;
+            }
+
             this.fillDatesArray();
         }
 
         this.setData = function(data) {
-            for (var i = 0; i < data.length; i++) {
-                var track = new BlockPuzzle.Track(data[i].name);
+            var tracks = data.tracks;
+            for (var i = 0; i < tracks.length; i++) {
+                var track = new BlockPuzzle.Track(tracks[i].name);
                 var reservations = [];
-                for (var j = 0; j < data[i].reservations.length; j++) {
-                    var reservation = data[i].reservations[j];
-                    reservations.push(new BlockPuzzle.Reservation(reservation[0],
-                                                                  reservation[1],
-                                                                  reservation[2]));
+                for (var j = 0; j < tracks[i].reservations.length; j++) {
+                    var reservation = tracks[i].reservations[j];
+                    reservations.push(new BlockPuzzle.Reservation(reservation.name,
+                                                                  reservation.start,
+                                                                  reservation.end));
                 }
                 track.setReservations(reservations);
                 this.tracks.push(track);
@@ -400,6 +406,7 @@ var BlockPuzzle = {
         this.parentElement = document.getElementById(elementName);
         this.element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         this.parentElement.appendChild(this.element);
+        this.dates = [];
 
         var this_ = this;
         window.onresize = function() {

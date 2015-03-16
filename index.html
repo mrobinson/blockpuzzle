@@ -7,25 +7,23 @@
 <div id="canvas" style="width: 100%;"></div>
     <script>
     var canvas = new BlockPuzzle.Canvas("canvas");
-    canvas.setData(
-        [
-            {
-                'name': 'Person1',
-                'reservations': [
-                    ['Project0', new Date(2014, 4, 1, 0, 0, 0, 0), new Date(2014, 5, 30, 0, 0, 0, 0)],
-                    ['Project1', new Date(2014, 2, 1, 0, 0, 0, 0), new Date(2014, 9, 30, 0, 0, 0, 0)],
-                    ['Project3', new Date(2014, 7, 1, 0, 0, 0, 0), new Date(2014, 8, 30, 0, 0, 0, 0)],
-                    ['Project5', new Date(2014, 4, 1, 0, 0, 0, 0), new Date(2014, 5, 30, 0, 0, 0, 0)],
-                ]
-            },
-            {
-                'name': 'Person2',
-                'reservations': [
-                    ['Project3', new Date(2014, 2, 12, 0, 0, 0, 0), new Date(2014, 8, 30, 0, 0, 0, 0)],
-                    ['Project4', new Date(2014, 7, 1, 0, 0, 0, 0), new Date(2014, 11, 6, 0, 0, 0, 0)],
-                ]
-            }
-        ]);
+    function updateGraph() {
+        var text = document.getElementById("projects").value;
+        var data = BlockPuzzle.convertTextToData(text);
+        console.log(data);
+        canvas.setData(data);
+    }
     </script>
+    <textarea id="projects" rows="10" cols="80">
+* Person1
+    - Project0:  1/5/2014-30/6/2014
+    - Project1:  1/3/2014-30/10/2014
+    - Project3:  1/8/2014-30/9/2014
+    - Project5:  1/5/2014-30/6/2014
+* Person2
+    - Project3:  12/3/2014-30/9/2014
+    - Project4:  1/8/2014-6/12/2014
+    </textarea>
+    <input type="submit" onclick="updateGraph();"/>
 </body>
 <html>

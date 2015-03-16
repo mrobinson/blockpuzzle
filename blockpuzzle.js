@@ -300,6 +300,9 @@ var BlockPuzzle = {
         }
 
         this.positionAndSizeElements = function(object) {
+            if (this.element == null)
+                return;
+
             if (this.width == this.parentElement.clientWidth &&
                 this.height == this.parentElement.clientHeight)
                 return;
@@ -367,6 +370,9 @@ var BlockPuzzle = {
         }
 
         this.setData = function(data) {
+            this.tracks = [];
+            this.dates = [];
+
             var tracks = data.tracks;
             for (var i = 0; i < tracks.length; i++) {
                 var track = new BlockPuzzle.Track(tracks[i].name);
@@ -388,6 +394,9 @@ var BlockPuzzle = {
         }
 
         this.buildDOM = function() {
+            if (this.element == null)
+                return;
+
             while (this.element.firstChild) {
                 this.element.removeChild(this.element.firstChild);
             }
@@ -402,11 +411,14 @@ var BlockPuzzle = {
         }
 
         this.tracks = [];
-
-        this.parentElement = document.getElementById(elementName);
-        this.element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        this.parentElement.appendChild(this.element);
         this.dates = [];
+
+        // Allow a null element for testing purposes.
+        if (elementName !== null) {
+            this.parentElement = document.getElementById(elementName);
+            this.element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            this.parentElement.appendChild(this.element);
+        }
 
         var this_ = this;
         window.onresize = function() {

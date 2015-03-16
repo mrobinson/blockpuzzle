@@ -159,3 +159,19 @@ QUnit.test("dateRangeToDates", function(assert) {
     var dates = BlockPuzzle.dateRangeToDates("Q1");
     assert.strictEqual(dates, null, "Invalid quarter string");
 });
+
+QUnit.test("Canvas.addData", function(assert) {
+    var simpleReservation = {
+        tracks: [ {
+            name: 'User One',
+            reservations: [ { name: 'Reservation One',
+                              start: new Date(2001, 0, 1, 0, 0, 0, 0),
+                              end: new Date(2001, 2, 31, 0, 0, 0, 0) } ],
+        } ],
+    };
+    var canvas = new BlockPuzzle.Canvas(null);
+    canvas.setData(simpleReservation);
+    canvas.setData(simpleReservation);
+
+    assert.equal(canvas.tracks.length, 1, "setData clears old data");
+});

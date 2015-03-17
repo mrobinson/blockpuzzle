@@ -175,3 +175,15 @@ QUnit.test("Canvas.addData", function(assert) {
 
     assert.equal(canvas.tracks.length, 1, "setData clears old data");
 });
+
+QUnit.test("Slice.calculateHoursForReservations", function(assert) {
+    var start = new Date();
+    var end = new Date();
+    end.setDate(end.getDate() + 30);
+
+    var slice = new BlockPuzzle.Slice(start, end);
+    canvas.setData(simpleReservation);
+    canvas.setData(simpleReservation);
+
+    assert.equal(canvas.tracks.length, 1, "setData clears old data");
+});

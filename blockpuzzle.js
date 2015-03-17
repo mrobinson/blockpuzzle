@@ -1,4 +1,5 @@
 var BlockPuzzle = {
+    AVAILABLE_HOURS: 45,
     TRACK_HEIGHT: 40,
     TRACK_BORDER_WIDTH: 1,
     TRACK_GAP: 5,
@@ -105,7 +106,7 @@ var BlockPuzzle = {
         this.lastDayOfMonth = lastDayOfMonth;
     },
 
-    Reservation: function(name, start, end) {
+    Reservation: function(name, start, end, hours) {
         this.buildDOM = function(container) {
             if (this.path == null)
                 this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -163,6 +164,11 @@ var BlockPuzzle = {
         this.topPoints = [];
         this.bottomPoints = [];
         this.path = null;
+
+        if (hours !== undefined || hours !== null)
+            this.hours = hours;
+        else
+            this.hours = null;
     },
 
     Slice: function(start, end) {
@@ -186,6 +192,27 @@ var BlockPuzzle = {
             }
         }
 
+        this.calculateHoursForReservations = function() {
+            this.reservationHours = [];
+            var hoursLeft = BlockPuzzle.AVAILABLE_HOURS;
+            var numReservationsWithoutHours = 0;
+            for (var i = 0; i < this.reservations.length; i++) {
+                var reservation = this.reservations[i];
+                if (null !== reservation.hours) {
+                    hoursLeft -= reservation.hours;
+                    this.reservationHours.push(reservation.hours);
+                } else
+                    this.reservationHours.push(null);
+            }
+
+            var hoursPerRemainingReservation = hoursLeft <= 0 ?
+                 0 : hoursLeft / numReservationsWithoutHours
+            for (var i = 0; i < this.reservations.length; i++) {
+                if (null === this.reservationHours[i])
+                    this.reservationHours[i] = hoursPerRemainingReservation;
+            }
+        }
+
         this.containsReservation = function(reservation) {
             return reservation.end >= this.start && reservation.start < this.end;
         }
@@ -195,6 +222,7 @@ var BlockPuzzle = {
         this.reservations = [];
         this.size = null;
         this.origin = null;
+        this.reservationHours = [];
     },
 
     Track: function(name) {
@@ -226,6 +254,9 @@ var BlockPuzzle = {
                     }
                 }
             }
+
+            for (var i = 0; i < this.slices.length; i++)
+                this.slices[i].calculateHoursForReservations();
         }
 
         this.buildDOM = function(container) {
@@ -381,7 +412,8 @@ var BlockPuzzle = {
                     var reservation = tracks[i].reservations[j];
                     reservations.push(new BlockPuzzle.Reservation(reservation.name,
                                                                   reservation.start,
-                                                                  reservation.end));
+                                                                  reservation.end,
+                                                                  reservation.hours));
                 }
                 track.setReservations(reservations);
                 this.tracks.push(track);

@@ -4,16 +4,7 @@
     <script src="blockpuzzle.js"></script>
 </head>
 <body>
-<div id="canvas" style="width: 100%;"></div>
-    <script>
-    var canvas = new BlockPuzzle.Canvas("canvas");
-    function updateGraph() {
-        var text = document.getElementById("projects").value;
-        var data = BlockPuzzle.convertTextToData(text);
-        console.log(data);
-        canvas.setData(data);
-    }
-    </script>
+    <div id="canvas" style="width: 100%;"></div>
     <textarea id="projects" rows="10" cols="80">
 * Person1
     - Project0:  1/5/2014-30/6/2014
@@ -25,5 +16,14 @@
     - Project4:  1/8/2014-6/12/2014
     </textarea>
     <input type="submit" onclick="updateGraph();"/>
+    <script>
+    var canvas = new BlockPuzzle.Canvas("canvas");
+    function updateGraph() {
+        var text = document.getElementById("projects").value;
+        var data = BlockPuzzle.convertTextToData(text);
+        canvas.setData(data);
+    }
+    updateGraph();
+    </script>
 </body>
 <html>

@@ -495,7 +495,7 @@ var BlockPuzzle = {
     },
 
     dateStringToDate: function(dateString) {
-        var fullDateRegex = /^([0-9][0-9]?)\/([0-9][0-9]?)\/([0-9][0-9][0-9][0-9])/;
+        var fullDateRegex = /^(\d\d?)\/(\d\d?)\/(\d\d\d\d)/;
         var match = fullDateRegex.exec(dateString);
         if (match) {
             return new Date(Number.parseInt(match[3]),
@@ -504,7 +504,7 @@ var BlockPuzzle = {
                             0, 0, 0, 0)
         }
 
-        var quarterRegex = /^Q([1,2,3,4])\/([0-9][0-9][0-9][0-9])/;
+        var quarterRegex = /^Q([1,2,3,4])\/(\d\d\d\d)/;
         var match = quarterRegex.exec(dateString);
         if (match) {
             return BlockPuzzle.getDateForQuarter(Number.parseInt(match[1]),
@@ -516,7 +516,7 @@ var BlockPuzzle = {
     },
 
     dateRangeToDates: function(dateString) {
-        var quarterRangeRegex = /Q([1,2,3,4])\/([0-9][0-9][0-9][0-9])\s*-\s*Q([1,2,3,4])\/([0-9][0-9][0-9][0-9])/;
+        var quarterRangeRegex = /Q([1,2,3,4])\/(\d\d\d\d)\s*-\s*Q([1,2,3,4])\/(\d\d\d\d)/;
         var match = quarterRangeRegex.exec(dateString);
         if (match) {
             var quarter1 = Number.parseInt(match[1]);
@@ -545,7 +545,7 @@ var BlockPuzzle = {
         }
 
 
-        var quarterRegex = /Q([1,2,3,4])\/([0-9][0-9][0-9][0-9])/;
+        var quarterRegex = /Q([1,2,3,4])\/(\d\d\d\d)/;
         var match = quarterRegex.exec(dateString);
         if (match) {
             var quarter = Number.parseInt(match[1]);

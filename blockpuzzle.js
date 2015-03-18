@@ -68,15 +68,15 @@ var BlockPuzzle = {
 
         this.topRight = function(size) {
             return [this.origin[0] + this.size[0], this.origin[1]];
-        }
+        };
 
         this.bottomRight = function(size) {
             return [this.origin[0] + this.size[0], this.origin[1] + this.size[1]];
-        }
+        };
 
         this.bottomLeft = function(size) {
             return [this.origin[0], this.origin[1] + this.size[1]];
-        }
+        };
 
         this.setFill = function(fill) {
             this.element.style.fill = fill;
@@ -103,19 +103,19 @@ var BlockPuzzle = {
             }
 
             container.appendChild(this.line.getElement());
-        }
+        };
 
         this.positionAndSizeElements = function(canvas, dayIndex) {
             var x = canvas.getDateOffsetXCoordinate(dayIndex);
             this.line.setVisible(this.lastDayOfMonth || canvas.dayWidth > 2);
             this.line.setPoints([x, 0], [x, canvas.height]);
-        }
+        };
 
         this.containsDate = function(date) {
             return date.getFullYear() == this.date.getFullYear() &&
                    date.getMonth() == this.date.getMonth() &&
                    date.getDate() == this.date.getDate();
-        }
+        };
 
         this.line = null;
         this.date = date;
@@ -127,7 +127,7 @@ var BlockPuzzle = {
             if (this.path == null)
                 this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             container.appendChild(this.path);
-        }
+        };
 
         this.positionAndSizeElements = function(canvas) {
             var pathString = "M " + this.topPoints[0].join(" ") + " ";
@@ -143,7 +143,7 @@ var BlockPuzzle = {
             this.path.setAttribute("fill", "rgba(150, 0, 0, 1)");
             this.topPoints = [];
             this.bottomPoints = [];
-        },
+        };
 
         this.addPoints = function(topPoint, bottomPoint) {
             this.topPoints.push(topPoint);
@@ -170,7 +170,7 @@ var BlockPuzzle = {
 
             previousTop[0] = previousBottom[0] = leftPoint;
             topPoint[0] = bottomPoint[0] = rightPoint;
-        }
+        };
 
         this.name = name;
 
@@ -211,7 +211,7 @@ var BlockPuzzle = {
 
                 offset += reservationHeight + BlockPuzzle.RESERVATION_PADDING;
             }
-        }
+        };
 
         this.calculateHoursForReservations = function() {
             this.reservationHours = [];
@@ -236,11 +236,11 @@ var BlockPuzzle = {
                         this.reservationHours[i] = hoursPerRemainingReservation;
                 }
             }
-        }
+        };
 
         this.containsReservation = function(reservation) {
             return reservation.end >= this.start && reservation.start < this.end;
-        }
+        };
 
         this.start = start;
         this.end = end;
@@ -282,7 +282,7 @@ var BlockPuzzle = {
 
             for (var i = 0; i < this.slices.length; i++)
                 this.slices[i].calculateHoursForReservations();
-        }
+        };
 
         this.buildDOM = function(container) {
             if (this.transform === null)
@@ -305,7 +305,7 @@ var BlockPuzzle = {
         this.setReservations = function(reservations) {
             this.reservations  = reservations;
             this.buildSlices();
-        }
+        };
 
         this.positionAndSizeElements = function(canvas) {
             this.transform.setAttribute("transform",
@@ -328,7 +328,7 @@ var BlockPuzzle = {
                 this.reservations[i].positionAndSizeElements();
             }
 
-        }
+        };
 
         this.origin = [0, 0];
         this.size = [0, 0];
@@ -342,7 +342,7 @@ var BlockPuzzle = {
     Canvas: function(elementName) {
         this.getDateOffsetXCoordinate = function(offset) {
             return (offset + 1) * this.dayWidth;
-        }
+        };
 
         this.getDateXCoordinate = function(date) {
             // Expensive way to calculate the date offset in our date range, that avoids
@@ -353,7 +353,7 @@ var BlockPuzzle = {
             }
             console.error("Could not get offset for date: " + date);
             return 0;
-        }
+        };
 
         this.positionAndSizeElements = function(object) {
             if (this.element == null)
@@ -381,7 +381,7 @@ var BlockPuzzle = {
                 this.tracks[i].size = [canvas.width, BlockPuzzle.TRACK_HEIGHT];
                 this.tracks[i].positionAndSizeElements(canvas);
             }
-        }
+        };
 
         this.fillDatesArray = function() {
             this.dates = [];
@@ -394,7 +394,7 @@ var BlockPuzzle = {
 
                 currentDate = nextDate;
             }
-        }
+        };
 
         this.calculateStartAndEndDates = function(data) {
             this.startDate = null;
@@ -423,7 +423,7 @@ var BlockPuzzle = {
             }
 
             this.fillDatesArray();
-        }
+        };
 
         this.setData = function(data) {
             this.tracks = [];
@@ -448,7 +448,7 @@ var BlockPuzzle = {
 
             this.buildDOM();
             this.positionAndSizeElements();
-        }
+        };
 
         this.buildDOM = function() {
             if (this.element == null)
@@ -465,7 +465,7 @@ var BlockPuzzle = {
             for (var i = 0; i < this.tracks.length; i++) {
                 this.tracks[i].buildDOM(this.element);
             }
-        }
+        };
 
         this.tracks = [];
         this.dates = [];
@@ -630,5 +630,5 @@ var BlockPuzzle = {
         }
 
         return null;
-    }
+    },
 }

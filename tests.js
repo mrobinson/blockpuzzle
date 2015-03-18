@@ -61,6 +61,7 @@ QUnit.test("convertTextToData reservations", function(assert) {
         tracks: [ {
             name: 'User One',
             reservations: [ { name: 'Reservation One',  
+                              hours: null,
                               start: new Date(2001, 0, 1, 0, 0, 0, 0),
                               end: new Date(2001, 2, 31, 0, 0, 0, 0) } ],
         } ],
@@ -73,6 +74,7 @@ QUnit.test("convertTextToData reservations", function(assert) {
         tracks: [ {
             name: 'User One',
             reservations: [ { name: 'Reservation One', 
+                              hours: null,
                               start: new Date(2009, 0, 21, 0, 0, 0, 0),
                               end: new Date(2009, 1, 23, 0, 0, 0, 0) } ],
         } ],
@@ -85,18 +87,19 @@ QUnit.test("convertTextToData reservations", function(assert) {
         tracks: [ {
             name: 'User One',
             reservations: [ { name: 'Reservation One',
+                              hours: 30,
                               start: new Date(2009, 5, 1, 0, 0, 0, 0),
                               end: new Date(2009, 11, 31, 0, 0, 0, 0) } ],
         } ],
     };
 
-    var data = BlockPuzzle.convertTextToData("* User One\n - Reservation One: Q3/2009-Q4/2009");
+    var data = BlockPuzzle.convertTextToData("* User One\n - Reservation One: Q3/2009-Q4/2009, 30hrs");
     assert.propEqual(data, rangeReservation, "Reservation with more complex range");
 
-    var data = BlockPuzzle.convertTextToData(" - Reservation One: Q3/2009-Q4/2009");
+    var data = BlockPuzzle.convertTextToData(" - Reservation One: Q3/2009-Q4/2009, 30");
     assert.propEqual(data, emptyData, "Don't add data when there is no current track.");
 
-    var data = BlockPuzzle.convertTextToData("\t\n - \tReservation One: Q3/2009-Q4/2009");
+    var data = BlockPuzzle.convertTextToData("\t\n - \tReservation One: Q3/2009-Q4/2009, 30 hrs");
     assert.propEqual(data, emptyData, "Don't add data when there is no current track.");
 
     var emptyTrack = {
@@ -160,11 +163,25 @@ QUnit.test("dateRangeToDates", function(assert) {
     assert.strictEqual(dates, null, "Invalid quarter string");
 });
 
+QUnit.test("Canvas.hoursStringtoHours", function(assert) {
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("24"), 24,
+                       "Simple integer hours");
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("24."), 24,
+                       "Simple integer hours with decimal point");
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("24.456"), 24.456,
+                       "Simple decimal hours");
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("24.456 hrs"), 24.456,
+                       "Simple decimal hours with 'hrs'");
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("24.456hrs"), 24.456,
+                       "Simple decimal hours with 'hrs' attached");
+});
+
 QUnit.test("Canvas.addData", function(assert) {
     var simpleReservation = {
         tracks: [ {
             name: 'User One',
             reservations: [ { name: 'Reservation One',
+                              hours: null,
                               start: new Date(2001, 0, 1, 0, 0, 0, 0),
                               end: new Date(2001, 2, 31, 0, 0, 0, 0) } ],
         } ],
@@ -174,4 +191,44 @@ QUnit.test("Canvas.addData", function(assert) {
     canvas.setData(simpleReservation);
 
     assert.equal(canvas.tracks.length, 1, "setData clears old data");
+});
+
+QUnit.test("Slice.calculateHoursForReservations", function(assert) {
+    var start = new Date();
+    var end = new Date();
+    end.setDate(end.getDate() + 30);
+
+    var slice = new BlockPuzzle.Slice(start, end);
+
+    var reservation1 = new BlockPuzzle.Reservation("Project1", start, end, null);
+    slice.reservations.push(reservation1);
+    slice.reservations.push(reservation1);
+    slice.calculateHoursForReservations();
+    assert.equal(slice.reservationHours[0], 17.5,
+                 "Two reservations with undefined hours");
+    assert.equal(slice.reservationHours[1], 17.5,
+                 "Two reservations with undefined hours");
+
+    var reservation2 = new BlockPuzzle.Reservation("Project1", start, end, 10);
+    slice.reservations = [];
+    slice.reservations.push(reservation1);
+    slice.reservations.push(reservation1);
+    slice.reservations.push(reservation2);
+    slice.calculateHoursForReservations();
+    assert.equal(slice.reservationHours[0], 12.5,
+                "One reservation with defined hours");
+    assert.equal(slice.reservationHours[1], 12.5,
+                 "One reservation with defined hours");
+    assert.equal(slice.reservationHours[2], 10,
+                 "One reservation with defined hours");
+
+    var reservation3 = new BlockPuzzle.Reservation("Project1", start, end, 55);
+    slice.reservations = [];
+    slice.reservations.push(reservation1);
+    slice.reservations.push(reservation3);
+    slice.calculateHoursForReservations();
+    assert.equal(slice.reservationHours[0], 0,
+                 "A reservation that takes all available hours");
+    assert.equal(slice.reservationHours[1], 55,
+                 "A reservation that takes all available hours");
 });

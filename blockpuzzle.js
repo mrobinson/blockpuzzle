@@ -26,9 +26,23 @@ var BlockPuzzle = {
     TRACK_HEIGHT: 40,
     TRACK_BORDER_WIDTH: 1,
     TRACK_GAP: 5,
+
+    // The gap between labels and the thing that they point to.
+    LABEL_GAP: 5,
+
+    // The font size for the labels.
+    LABEL_FONT_SIZE: 12,
+
+    // The font family for the labels.
+    LABEL_FONT_FAMILY: "sans-serif",
+
+    // The space on the left hand side of the chart used to print the track name.
+    TRACK_LEFT_LABEL_WIDTH: 100,
+
     RESERVATION_PADDING: 1,
 
     COLOR_SCHEME: {
+        label: "black",
         track_border: "rgb(256, 0, 0)",
         month_line: "rgba(100, 100, 100, 0.5)",
         day_line: "rgba(200, 200, 200, 0.4)",
@@ -455,7 +469,8 @@ var BlockPuzzle = {
             var heightBetweenTracks = BlockPuzzle.TRACK_HEIGHT + BlockPuzzle.TRACK_GAP;
             this.height = heightBetweenTracks * this.tracks.length - BlockPuzzle.TRACK_GAP;
             this.width = this.parentElement.clientWidth;
-            this.dayWidth = this.width / this.dates.length;
+            this.trackWidth = canvas.width - BlockPuzzle.TRACK_LEFT_LABEL_WIDTH;
+            this.dayWidth = this.trackWidth / this.dates.length;
 
             this.element.style.width = this.width;
             this.element.style.height = this.height;
@@ -466,9 +481,15 @@ var BlockPuzzle = {
             }
 
             for (var i = 0; i < this.tracks.length; i++) {
-                this.tracks[i].origin = [0, heightBetweenTracks * i];
-                this.tracks[i].size = [canvas.width, BlockPuzzle.TRACK_HEIGHT];
-                this.tracks[i].positionAndSizeElements(canvas);
+                var trackYOrigin = heightBetweenTracks * i;
+                var track = this.tracks[i];
+                track.origin = [0, trackYOrigin];
+                track.size = [this.trackWidth, BlockPuzzle.TRACK_HEIGHT];
+                track.positionAndSizeElements(canvas);
+
+                var label = this.trackLabels[i];
+                label.setAttribute("y", trackYOrigin + (heightBetweenTracks / 2));
+                label.setAttribute("x", BlockPuzzle.TRACK_LEFT_LABEL_WIDTH - BlockPuzzle.LABEL_GAP);
             }
         };
 
@@ -545,18 +566,37 @@ var BlockPuzzle = {
             while (this.element.firstChild) {
                 this.element.removeChild(this.element.firstChild);
             }
+            this.trackLabels = [];
+
+            this.chartBodyTransform =
+                document.createElementNS("http://www.w3.org/2000/svg", "g");
+            this.chartBodyTransform.setAttribute("transform",
+                "translate(" + BlockPuzzle.TRACK_LEFT_LABEL_WIDTH + ", 0)");
+            this.element.appendChild(this.chartBodyTransform);
 
             for (var i = 0; i < this.dates.length; i++) {
-                this.dates[i].buildDOM(this.element);
+                this.dates[i].buildDOM(this.chartBodyTransform);
             }
 
             for (var i = 0; i < this.tracks.length; i++) {
-                this.tracks[i].buildDOM(this.element);
+                this.tracks[i].buildDOM(this.chartBodyTransform);
+
+                var label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                label.setAttribute("font-size", BlockPuzzle.LABEL_FONT_SIZE);
+                label.setAttribute("font-family", BlockPuzzle.LABEL_FONT_FAMILY);
+                label.setAttribute("fill", BlockPuzzle.COLOR_SCHEME.label);
+                label.appendChild(document.createTextNode(this.tracks[i].name))
+                label.setAttribute("text-anchor", "end");
+
+                this.element.appendChild(label);
+                this.trackLabels.push(label);
             }
         };
 
         this.tracks = [];
         this.dates = [];
+        this.trackLabels = [];
+        this.chartBodyTransform = null;
 
         // Allow a null element for testing purposes.
         if (elementName !== null) {

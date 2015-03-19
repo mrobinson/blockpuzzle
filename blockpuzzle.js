@@ -31,13 +31,16 @@ var BlockPuzzle = {
     LABEL_GAP: 5,
 
     // The font size for the labels.
-    LABEL_FONT_SIZE: 12,
+    LABEL_FONT_SIZE: 10,
 
     // The font family for the labels.
     LABEL_FONT_FAMILY: "sans-serif",
 
     // The space on the left hand side of the chart used to print the track name.
     TRACK_LEFT_LABEL_WIDTH: 100,
+
+    // The space on the left hand side of the chart used to print the track name.
+    CANVAS_TOP_LABEL_HEIGHT: 40,
 
     RESERVATION_PADDING: 1,
 
@@ -467,7 +470,8 @@ var BlockPuzzle = {
                 return;
 
             var heightBetweenTracks = BlockPuzzle.TRACK_HEIGHT + BlockPuzzle.TRACK_GAP;
-            this.height = heightBetweenTracks * this.tracks.length - BlockPuzzle.TRACK_GAP;
+            this.height = BlockPuzzle.CANVAS_TOP_LABEL_HEIGHT +
+                (heightBetweenTracks * this.tracks.length) - BlockPuzzle.TRACK_GAP;
             this.width = this.parentElement.clientWidth;
             this.trackWidth = canvas.width - BlockPuzzle.TRACK_LEFT_LABEL_WIDTH;
             this.dayWidth = this.trackWidth / this.dates.length;
@@ -475,9 +479,23 @@ var BlockPuzzle = {
             this.element.style.width = this.width;
             this.element.style.height = this.height;
             this.element.setAttribute("viewBox", "0 0 " + this.width + " " + this.height);
+            this.chartBodyTransform.setAttribute("transform",
+                "translate(" + BlockPuzzle.TRACK_LEFT_LABEL_WIDTH + ", " +
+                               BlockPuzzle.CANVAS_TOP_LABEL_HEIGHT + ")");
 
             for (var i = 0; i < this.dates.length; i++) {
                 this.dates[i].positionAndSizeElements(canvas, i);
+            }
+
+            for (var i = 0; i < this.monthLabels.length; i++) {
+                var label = this.monthLabels[i];
+                var origin =
+                    [BlockPuzzle.TRACK_LEFT_LABEL_WIDTH + canvas.getDateXCoordinate(label.date),
+                     BlockPuzzle.CANVAS_TOP_LABEL_HEIGHT - BlockPuzzle.LABEL_GAP];
+
+                label.setAttribute("x", origin[0]);
+                label.setAttribute("y", origin[1]);
+                label.setAttribute("transform", "rotate(-30, " + origin + ")");
             }
 
             for (var i = 0; i < this.tracks.length; i++) {
@@ -488,7 +506,8 @@ var BlockPuzzle = {
                 track.positionAndSizeElements(canvas);
 
                 var label = this.trackLabels[i];
-                label.setAttribute("y", trackYOrigin + (heightBetweenTracks / 2));
+                label.setAttribute("y", BlockPuzzle.CANVAS_TOP_LABEL_HEIGHT +
+                                        trackYOrigin + (heightBetweenTracks / 2));
                 label.setAttribute("x", BlockPuzzle.TRACK_LEFT_LABEL_WIDTH - BlockPuzzle.LABEL_GAP);
             }
         };
@@ -559,6 +578,35 @@ var BlockPuzzle = {
             this.positionAndSizeElements();
         };
 
+        this.createLabel = function(text) {
+            var label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            label.setAttribute("font-size", BlockPuzzle.LABEL_FONT_SIZE);
+            label.setAttribute("font-family", BlockPuzzle.LABEL_FONT_FAMILY);
+            label.setAttribute("fill", BlockPuzzle.COLOR_SCHEME.label);
+            label.appendChild(document.createTextNode(text));
+            return label;
+        }
+
+        this.createTrackLabel = function(track) {
+            var label = this.createLabel(track.name);
+            label.setAttribute("text-anchor", "end");
+            this.trackLabels.push(label);
+            return label;
+        }
+
+        this.createMonthLabel = function(date) {
+            // FIXME: We can do better than this. Consider Moment.js.
+            var text = ["Jan", "Feb", "Mar", "Apr",
+                        "May", "Jun", "Jul", "Aug",
+                        "Sep", "Oct", "Nov", "Dec"][date.getMonth()] +
+                       " " + date.getFullYear();
+
+            var label = this.createLabel(text);
+            label.date = date;
+            this.monthLabels.push(label);
+            return label;
+        };
+
         this.buildDOM = function() {
             if (this.element == null)
                 return;
@@ -566,7 +614,9 @@ var BlockPuzzle = {
             while (this.element.firstChild) {
                 this.element.removeChild(this.element.firstChild);
             }
+
             this.trackLabels = [];
+            this.monthLabels = [];
 
             this.chartBodyTransform =
                 document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -576,20 +626,14 @@ var BlockPuzzle = {
 
             for (var i = 0; i < this.dates.length; i++) {
                 this.dates[i].buildDOM(this.chartBodyTransform);
+                var date = this.dates[i].date;
+                if (date.getDate() == 1)
+                    this.element.appendChild(this.createMonthLabel(date));
             }
 
             for (var i = 0; i < this.tracks.length; i++) {
                 this.tracks[i].buildDOM(this.chartBodyTransform);
-
-                var label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                label.setAttribute("font-size", BlockPuzzle.LABEL_FONT_SIZE);
-                label.setAttribute("font-family", BlockPuzzle.LABEL_FONT_FAMILY);
-                label.setAttribute("fill", BlockPuzzle.COLOR_SCHEME.label);
-                label.appendChild(document.createTextNode(this.tracks[i].name))
-                label.setAttribute("text-anchor", "end");
-
-                this.element.appendChild(label);
-                this.trackLabels.push(label);
+                this.element.appendChild(this.createTrackLabel(this.tracks[i]));
             }
         };
 

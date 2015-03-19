@@ -220,9 +220,9 @@ QUnit.test("Slice.calculateHoursForReservations", function(assert) {
     slice.reservations.push(reservation1);
     slice.reservations.push(reservation1);
     slice.calculateHoursForReservations();
-    assert.equal(slice.reservationHours[0], 17.5,
+    assert.equal(slice.reservationHours[0], 20,
                  "Two reservations with undefined hours");
-    assert.equal(slice.reservationHours[1], 17.5,
+    assert.equal(slice.reservationHours[1], 20,
                  "Two reservations with undefined hours");
 
     var reservation2 = new BlockPuzzle.Reservation("Project1", start, end, 10);
@@ -231,9 +231,9 @@ QUnit.test("Slice.calculateHoursForReservations", function(assert) {
     slice.reservations.push(reservation1);
     slice.reservations.push(reservation2);
     slice.calculateHoursForReservations();
-    assert.equal(slice.reservationHours[0], 12.5,
+    assert.equal(slice.reservationHours[0], 15,
                 "One reservation with defined hours");
-    assert.equal(slice.reservationHours[1], 12.5,
+    assert.equal(slice.reservationHours[1], 15,
                  "One reservation with defined hours");
     assert.equal(slice.reservationHours[2], 10,
                  "One reservation with defined hours");

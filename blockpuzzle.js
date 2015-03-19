@@ -15,7 +15,14 @@
  */
 
 var BlockPuzzle = {
-    AVAILABLE_HOURS: 35,
+    AVAILABLE_HOURS: 40,
+
+    // When reservations don't have any hours specified, free time
+    // can optionally steal some of those hours. These hours, as
+    // with other reservations with no hours specified will not be
+    // allocated if the available hours are totally consumed.
+    FREE_TIME_ALLOCATION: 5,
+
     TRACK_HEIGHT: 40,
     TRACK_BORDER_WIDTH: 1,
     TRACK_GAP: 5,
@@ -180,6 +187,7 @@ var BlockPuzzle = {
         this.topPoints = [];
         this.bottomPoints = [];
         this.path = null;
+        this.freeTime = false;
 
         if (hours !== undefined && hours !== null)
             this.hours = hours;
@@ -188,28 +196,48 @@ var BlockPuzzle = {
     },
 
     Slice: function(start, end) {
-        this.addPointsToReservations = function() {
-            var totalReservationHours = this.reservationHours.reduce(function(a, b) {
-                return a + b;
-            });
+        this.totalHoursReserved = function() {
+            var total = this.freeTimeHours;
+            for (var i = 0; i < this.reservationHours.length; i++)
+                total += this.reservationHours[i]
+            return total;
+        };
 
+        this.addPointsToReservations = function() {
             var numReservations = this.reservations.length;
+            if (this.freeTimeHours > 0)
+                numReservations++;
+
+            var totalHoursReserved = this.totalHoursReserved();
             var totalPadding = (2 * BlockPuzzle.TRACK_BORDER_WIDTH) +
                                 numReservations * 2 * BlockPuzzle.RESERVATION_PADDING;
-            var reservationHeightPerHour = (this.size[1] - totalPadding) / totalReservationHours;
-            var totalDrawnHeight = (totalReservationHours * reservationHeightPerHour) + totalPadding;
+            var reservationHeightPerHour = (this.size[1] - totalPadding) / totalHoursReserved;
+            var totalDrawnHeight = (totalHoursReserved * reservationHeightPerHour) + totalPadding;
             var offset = ((this.size[1] - totalDrawnHeight) / 2) + BlockPuzzle.TRACK_BORDER_WIDTH;
 
-            for (var i = 0; i < numReservations; i++) {
-                offset += BlockPuzzle.RESERVATION_PADDING;
+            var origin = this.origin;
+            var size = this.size;
+            function setReservationPoints(reservation, offset, height) {
+                reservation.addPoints([origin[0], offset], [origin[0], offset + height]);
+                reservation.addPoints([origin[0] + size[0], offset],
+                                      [origin[0] + size[0], offset + height]);
+            }
 
+            offset += BlockPuzzle.RESERVATION_PADDING;
+            for (var i = 0; i < this.reservations.length; i++) {
                 var reservationHeight = reservationHeightPerHour * this.reservationHours[i];
-                this.reservations[i].addPoints([this.origin[0], offset],
-                                               [this.origin[0], offset + reservationHeight]);
-                this.reservations[i].addPoints([this.origin[0] + this.size[0], offset],
-                                               [this.origin[0] + this.size[0], offset + reservationHeight]);
+                setReservationPoints(this.reservations[i], offset, reservationHeight);
+                offset += reservationHeight + (BlockPuzzle.RESERVATION_PADDING * 2);
+            }
 
-                offset += reservationHeight + BlockPuzzle.RESERVATION_PADDING;
+            if (this.freeTime != null) {
+                // Undoing the last offset prevents a dip into the bottom of the track area.
+                // When there are free time hours this dip normally connects to the block of
+                // free time, but when there are 0 hours, the block isn't shown.
+                if (this.freeTimeHours == 0)
+                    offset -= (BlockPuzzle.RESERVATION_PADDING * 2);
+                setReservationPoints(this.freeTime, offset,
+                                     this.freeTimeHours * reservationHeightPerHour);
             }
         };
 
@@ -228,6 +256,11 @@ var BlockPuzzle = {
                 }
             }
 
+            if (hoursLeft > 0 && this.freeTime !== null) {
+                this.freeTimeHours += this.freeTime.hours;
+                hoursLeft -= this.freeTime.hours;
+            }
+
             if (numReservationsWithoutHours > 0) {
                 var hoursPerRemainingReservation = hoursLeft <= 0 ?
                      0 : (hoursLeft / numReservationsWithoutHours);
@@ -235,6 +268,10 @@ var BlockPuzzle = {
                     if (null === this.reservationHours[i])
                         this.reservationHours[i] = hoursPerRemainingReservation;
                 }
+            } else if (this.freeTime !== null) {
+                // If we don't need to divvy out hours to reservations, just allocate
+                // the rest to free time.
+                this.freeTimeHours += hoursLeft;
             }
         };
 
@@ -248,11 +285,15 @@ var BlockPuzzle = {
         this.size = null;
         this.origin = null;
         this.reservationHours = [];
+
+        // Optionally track free time.
+        this.freeTimeHours = 0;
+        this.freeTime = null;
     },
 
-    Track: function(name) {
+    Track: function(name, start, end) {
         this.buildSlices = function(container) {
-            var dates = [];
+            var dates = [this.start, this.end];
             for (var i = 0; i < this.reservations.length; i++) {
                 dates.push(this.reservations[i].start);
 
@@ -268,7 +309,9 @@ var BlockPuzzle = {
             for (var i = 1; i < dates.length; i++) {
                 if (dates[i-1].getTime() == dates[i].getTime())
                     continue;
-                this.slices.push(new BlockPuzzle.Slice(dates[i-1], dates[i]));
+                var slice = new BlockPuzzle.Slice(dates[i-1], dates[i]);
+                slice.freeTime = this.freeTime;
+                this.slices.push(slice);
             }
 
             for (var i = 0; i < this.reservations.length; i++) {
@@ -300,6 +343,9 @@ var BlockPuzzle = {
 
             for (var i = 0; i < this.reservations.length; i++)
                 this.reservations[i].buildDOM(this.transform);
+
+            if (this.freeTime != null)
+                this.freeTime.buildDOM(this.transform);
         };
 
         this.setReservations = function(reservations) {
@@ -328,8 +374,12 @@ var BlockPuzzle = {
                 this.reservations[i].positionAndSizeElements();
             }
 
+            if (this.freeTime != null)
+                this.freeTime.positionAndSizeElements();
         };
 
+        this.start = start;
+        this.end = end;
         this.origin = [0, 0];
         this.size = [0, 0];
         this.name = name;
@@ -337,6 +387,15 @@ var BlockPuzzle = {
         this.rect = null;
         this.reservations = [];
         this.slices = []
+
+        if (BlockPuzzle.FREE_TIME_ALLOCATION > 0) {
+            this.freeTime = new BlockPuzzle.Reservation("Free",
+                                                        this.start,
+                                                        this.end,
+                                                        BlockPuzzle.FREE_TIME_ALLOCATION);
+        } else {
+            this.freeTime = null;
+        }
     },
 
     Canvas: function(elementName) {
@@ -396,21 +455,20 @@ var BlockPuzzle = {
             }
         };
 
-        this.calculateStartAndEndDates = function(data) {
+        this.calculateStartAndEndDatesFromData = function(data) {
             this.startDate = null;
             this.endDate = null;
 
-            for (var i = 0; i < this.tracks.length; i++) {
-                var reservations = this.tracks[i].reservations;
-                for (var j = 0; j < reservations.length; j++) {
-                    var reservation = reservations[j];
-
-                    if (this.startDate === null || this.startDate > reservation.startDate) {
+            var tracks = data.tracks;
+            for (var i = 0; i < tracks.length; i++) {
+                for (var j = 0; j < tracks[i].reservations.length; j++) {
+                    var reservation = tracks[i].reservations[j];
+                    if (this.startDate === null || this.startDate > reservation.start) {
                         this.startDate =
                             new Date(reservation.start.getFullYear(), 0, 1, 0, 0, 0, 0);
                     }
 
-                    if (this.endDate === null || this.endDate < reservation.endDate) {
+                    if (this.endDate === null || this.endDate < reservation.end) {
                         this.endDate =
                             new Date(reservation.end.getFullYear(), 11, 31, 0, 0, 0, 0);
                     }
@@ -429,9 +487,11 @@ var BlockPuzzle = {
             this.tracks = [];
             this.dates = [];
 
+            this.calculateStartAndEndDatesFromData(data);
+
             var tracks = data.tracks;
             for (var i = 0; i < tracks.length; i++) {
-                var track = new BlockPuzzle.Track(tracks[i].name);
+                var track = new BlockPuzzle.Track(tracks[i].name, this.startDate, this.endDate);
                 var reservations = [];
                 for (var j = 0; j < tracks[i].reservations.length; j++) {
                     var reservation = tracks[i].reservations[j];
@@ -443,8 +503,6 @@ var BlockPuzzle = {
                 track.setReservations(reservations);
                 this.tracks.push(track);
             }
-
-            this.calculateStartAndEndDates();
 
             this.buildDOM();
             this.positionAndSizeElements();

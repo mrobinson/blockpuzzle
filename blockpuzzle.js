@@ -310,13 +310,22 @@ var BlockPuzzle = {
 
     Track: function(name, start, end) {
         this.buildSlices = function(container) {
-            var dates = [this.start, this.end];
-            for (var i = 0; i < this.reservations.length; i++) {
-                dates.push(this.reservations[i].start);
+            var dates = [];
+            function addStartAndEndToDates(start, end) {
+                dates.push(start);
 
-                var end = new Date(this.reservations[i].end);
+                // The end date is the day before the next slice begins, so normalize
+                // to the beginning of every new slice. For slice ending dates, we remove
+                // this day below, but these end dates also specify the start of new slices.
+                var end = new Date(end);
                 end.setDate(end.getDate() + 1);
                 dates.push(end);
+            }
+
+            addStartAndEndToDates(this.start, this.end);
+            for (var i = 0; i < this.reservations.length; i++) {
+                addStartAndEndToDates(this.reservations[i].start,
+                                      this.reservations[i].end);
             }
 
             dates.sort(function(date1, date2) {
@@ -326,7 +335,10 @@ var BlockPuzzle = {
             for (var i = 1; i < dates.length; i++) {
                 if (dates[i-1].getTime() == dates[i].getTime())
                     continue;
-                var slice = new BlockPuzzle.Slice(dates[i-1], dates[i]);
+
+                var end = new Date(dates[i]);
+                end.setDate(end.getDate() - 1);
+                var slice = new BlockPuzzle.Slice(dates[i-1], end);
                 slice.freeTime = this.freeTime;
                 this.slices.push(slice);
             }

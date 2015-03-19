@@ -248,3 +248,35 @@ QUnit.test("Slice.calculateHoursForReservations", function(assert) {
     assert.equal(slice.reservationHours[1], 55,
                  "A reservation that takes all available hours");
 });
+
+QUnit.test("Track.buildSlices", function(assert) {
+    var track = new BlockPuzzle.Track("Test", new Date(2014, 0, 1), new Date(2014, 11, 31));
+    track.setReservations([
+        new BlockPuzzle.Reservation("A", new Date(2014, 0, 20), new Date(2014, 0, 31)),
+        new BlockPuzzle.Reservation("B", new Date(2014, 5, 10), new Date(2014, 6, 20))]);
+
+    function assertSliceStartAndEnd(slice, start, end, message) {
+        assert.equal(slice.start.getTime(), start.getTime(), message + " - start correct");
+        assert.equal(slice.end.getTime(), end.getTime(), message + " - end correct");
+    }
+
+    var message = "Slices for non-overlapping reservations";
+    assert.equal(track.slices.length, 5, message);
+    assertSliceStartAndEnd(track.slices[0], new Date(2014, 0, 1), new Date(2014, 0, 19), message);
+    assertSliceStartAndEnd(track.slices[1], new Date(2014, 0, 20), new Date(2014, 0, 31), message);
+    assertSliceStartAndEnd(track.slices[2], new Date(2014, 1, 1), new Date(2014, 5, 9), message);
+    assertSliceStartAndEnd(track.slices[3], new Date(2014, 5, 10), new Date(2014, 6, 20), message);
+    assertSliceStartAndEnd(track.slices[4], new Date(2014, 6, 21), new Date(2014, 11, 31), message);
+
+    var track = new BlockPuzzle.Track("Test2", new Date(2014, 0, 1), new Date(2014, 11, 31));
+    track.setReservations([
+        new BlockPuzzle.Reservation("A", new Date(2014, 0, 20), new Date(2014, 3, 30)),
+        new BlockPuzzle.Reservation("B", new Date(2014, 1, 15), new Date(2014, 4, 10))]);
+    var message = "Slices for overlapping reservations";
+    assert.equal(track.slices.length, 5, message);
+    assertSliceStartAndEnd(track.slices[0], new Date(2014, 0, 1), new Date(2014, 0, 19), message);
+    assertSliceStartAndEnd(track.slices[1], new Date(2014, 0, 20), new Date(2014, 1, 14), message);
+    assertSliceStartAndEnd(track.slices[2], new Date(2014, 1, 15), new Date(2014, 3, 30), message);
+    assertSliceStartAndEnd(track.slices[3], new Date(2014, 4, 1), new Date(2014, 4, 10), message);
+    assertSliceStartAndEnd(track.slices[4], new Date(2014, 4, 11), new Date(2014, 11, 31), message);
+});

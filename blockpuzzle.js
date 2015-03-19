@@ -28,6 +28,22 @@ var BlockPuzzle = {
     TRACK_GAP: 5,
     RESERVATION_PADDING: 1,
 
+    COLOR_SCHEME: {
+        track_border: "rgb(256, 0, 0)",
+        month_line: "rgba(100, 100, 100, 0.5)",
+        day_line: "rgba(200, 200, 200, 0.4)",
+        reservations: [
+            "#4D4D4D",
+            "#5DA5DA",
+            "#FAA43A",
+            "#60BD68",
+            "#B2912F",
+            "#B276B2",
+            "#DECF3F",
+            "#F15854",
+        ],
+    },
+
     Line: function() {
         this.getElement = function() {
             return this.element;
@@ -104,9 +120,9 @@ var BlockPuzzle = {
             if (this.line === null) {
                 this.line = new BlockPuzzle.Line();
                 if (this.lastDayOfMonth)
-                    this.line.setStroke(2, "rgba(100, 100, 100, 0.5)");
+                    this.line.setStroke(2, BlockPuzzle.COLOR_SCHEME.month_line);
                 else
-                    this.line.setStroke(1, "rgba(200, 200, 200, 0.4)");
+                    this.line.setStroke(1, BlockPuzzle.COLOR_SCHEME.day_line);
             }
 
             container.appendChild(this.line.getElement());
@@ -147,7 +163,8 @@ var BlockPuzzle = {
             }
 
             this.path.setAttribute("d", pathString);
-            this.path.setAttribute("fill", "rgba(150, 0, 0, 1)");
+
+            this.path.setAttribute("fill", BlockPuzzle.Reservation.getColorForReservation(this));
             this.topPoints = [];
             this.bottomPoints = [];
         };
@@ -336,7 +353,8 @@ var BlockPuzzle = {
             if (this.rect === null) {
                 this.rect = new BlockPuzzle.Rect();
                 this.rect.setFill("rgba(0, 0, 0, 0)");
-                this.rect.setStroke(BlockPuzzle.TRACK_BORDER_WIDTH, "rgb(256, 0, 0)");
+                this.rect.setStroke(BlockPuzzle.TRACK_BORDER_WIDTH,
+                                    BlockPuzzle.COLOR_SCHEME.track_border);
             }
 
             this.transform.appendChild(this.rect.getElement());
@@ -689,4 +707,21 @@ var BlockPuzzle = {
 
         return null;
     },
+}
+
+BlockPuzzle.Reservation.getColorForReservation = function(reservation) {
+    if (BlockPuzzle.Reservation.colorMap === undefined) {
+        BlockPuzzle.Reservation.colorMap = {};
+        BlockPuzzle.Reservation.unusedColors = BlockPuzzle.COLOR_SCHEME.reservations.slice();
+    }
+
+    var colorMap = BlockPuzzle.Reservation.colorMap;
+    var key = "__" + reservation.name;
+    if (colorMap[key] === undefined) {
+        if (BlockPuzzle.Reservation.unusedColors.length == 0)
+            BlockPuzzle.Reservation.unusedColors = BlockPuzzle.COLOR_SCHEME.reservations.slice();
+        colorMap[key] = BlockPuzzle.Reservation.unusedColors.pop();
+    }
+
+    return colorMap[key];
 }

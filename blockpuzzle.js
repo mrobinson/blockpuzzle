@@ -178,10 +178,11 @@ var BlockPuzzle = {
             for (var j = this.bottomPoints.length - 1; j >= 0; j--) {
                 pathString += "L " + this.bottomPoints[j].join(" ") + " ";
             }
+            pathString += "L" + this.topPoints[0].join(" ");
 
             this.path.setAttribute("d", pathString);
-
             this.path.setAttribute("fill", BlockPuzzle.Reservation.getColorForReservation(this));
+
             this.topPoints = [];
             this.bottomPoints = [];
         };

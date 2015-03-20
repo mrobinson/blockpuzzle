@@ -187,7 +187,7 @@ var BlockPuzzle = {
             this.bottomPoints = [];
         };
 
-        this.addPoints = function(topPoint, bottomPoint) {
+        this.addPoints = function(topPoint, bottomPoint, dayWidth) {
             this.topPoints.push(topPoint);
             this.bottomPoints.push(bottomPoint);
 
@@ -203,11 +203,11 @@ var BlockPuzzle = {
                 return;
 
             if (leftHeight == 0 || rightHeight == 0) {
-                var bigAdjust = BlockPuzzle.RESERVATION_PADDING;
-                var littleAdjust = BlockPuzzle.RESERVATION_PADDING;
+                var bigAdjust = dayWidth / 2;
+                var littleAdjust = dayWidth / 2;
             } else {
-                var bigAdjust = 8;
-                var littleAdjust = 5;
+                var bigAdjust = dayWidth / 2 + 1;
+                var littleAdjust = dayWidth / 2;
             }
 
             if (leftHeight > rightHeight) {
@@ -246,7 +246,7 @@ var BlockPuzzle = {
             return total;
         };
 
-        this.addPointsToReservations = function() {
+        this.addPointsToReservations = function(dayWidth) {
             var numReservations = this.reservations.length;
             if (this.freeTimeHours > 0)
                 numReservations++;
@@ -261,9 +261,9 @@ var BlockPuzzle = {
             var origin = this.origin;
             var size = this.size;
             function setReservationPoints(reservation, offset, height) {
-                reservation.addPoints([origin[0], offset], [origin[0], offset + height]);
+                reservation.addPoints([origin[0], offset], [origin[0], offset + height], dayWidth);
                 reservation.addPoints([origin[0] + size[0], offset],
-                                      [origin[0] + size[0], offset + height]);
+                                      [origin[0] + size[0], offset + height], dayWidth);
             }
 
             offset += BlockPuzzle.RESERVATION_PADDING;
@@ -423,7 +423,7 @@ var BlockPuzzle = {
 
                 slice.origin = [x, this.origin[1]];
                 slice.size = [width, BlockPuzzle.TRACK_HEIGHT];
-                slice.addPointsToReservations();
+                slice.addPointsToReservations(canvas.dayWidth);
             }
 
             for (var i = 0; i < this.reservations.length; i++) {

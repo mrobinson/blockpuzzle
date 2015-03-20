@@ -220,6 +220,10 @@ var BlockPuzzle = {
             topPoint[0] = bottomPoint[0] = rightPoint;
         };
 
+        this.setMouseOverHandler = function(handler) {
+            this.path.onmousemove = handler.bind(this, this);
+        };
+
         this.name = name;
 
         // Normalize dates to all be at midnight.
@@ -432,6 +436,20 @@ var BlockPuzzle = {
                 this.freeTime.positionAndSizeElements();
         };
 
+        this.setMouseOverHandler = function(handler) {
+            this.transform.onmousemove = handler.bind(this, this);
+            this.rect.onmousemove = handler.bind(this, this);
+        };
+
+        this.setReservationMouseOverHandler = function(handler) {
+            for (var r = 0; r < this.reservations.length; r++) {
+                this.reservations[r].setMouseOverHandler(handler);
+            }
+            if (this.freeTime !== null)
+                this.freeTime.setMouseOverHandler(handler);
+        };
+
+        var self = this;
         this.start = start;
         this.end = end;
         this.origin = [0, 0];
@@ -450,6 +468,82 @@ var BlockPuzzle = {
         } else {
             this.freeTime = null;
         }
+    },
+
+    HoverBox: function(canvas) {
+        this.remove = function() {
+            if (this.element === null)
+                return;
+
+            document.body.removeChild(this.element);
+            this.element = null;
+        };
+
+        this.setCanvasBoundingRect = function(rect) {
+            this.canvasBoundingRect = rect;
+        };
+
+        this.setCurrentTrack = function(track) {
+            this.currentTrack = track;
+        };
+
+        this.setCurrentReservation = function(reservation) {
+            this.currentReservation = reservation;
+        };
+
+        this.element = document.createElement("div");
+        this.element.style.fontFamily = "sans-serif";
+        this.element.style.fontSize = "12px";
+        this.element.style.width = "100px";
+        this.element.style.background = "white";
+        this.element.style.display = "none";
+        this.element.style.padding = "10px";
+        this.element.style.margin = "10px";
+        this.element.style.border = "1px solid black";
+        this.element.style.position = "absolute";
+        this.element.style.boxShadow = "rgba(0, 0, 0, 0.5) 2px 2px 3px";
+
+        // TODO: Set this based on the z index of the canvas.
+        this.element.style.zIndex = "100";
+
+        document.body.appendChild(this.element);
+
+        var self = this;
+        for (var i = 0; i < canvas.tracks.length; i++) {
+            var track = canvas.tracks[i];
+            track.setMouseOverHandler(this.setCurrentTrack.bind(self));
+            track.setReservationMouseOverHandler(this.setCurrentReservation.bind(self));
+        }
+
+        canvas.element.onmousemove = function(event) {
+            if (!event)
+                event = window.event;
+
+            var leftOrigin = event.pageX;
+            if (self.canvasBoundingRect !== null && event.pageX + 140 > self.canvasBoundingRect.right)
+                 leftOrigin = event.pageX - 140;
+
+            if (self.currentTrack && self.currentReservation) {
+                self.element.style.left = leftOrigin + "px";
+                self.element.style.top = event.pageY + "px";
+                self.element.innerHTML =
+                    "<b>Person:</b> " + self.currentTrack.name + "<br/>" +
+                    "<b>Working on:</b> " + self.currentReservation.name;
+                self.element.style.display = "";
+            } else {
+                self.element.style.display = "none";
+            }
+
+            self.currentTrack = self.currentReservation = null;
+        };
+
+        canvas.element.onmouseleave = function(event) {
+            self.element.style.display = "none";
+        };
+
+        this.currentReservation = null;
+        this.currentTrack = null;
+        this.canvasBoundingRect = null;
     },
 
     Canvas: function(elementName) {
@@ -518,6 +612,8 @@ var BlockPuzzle = {
                 trackLabel.setAttribute("x",
                                         BlockPuzzle.TRACK_LEFT_LABEL_WIDTH - BlockPuzzle.LABEL_GAP);
             }
+
+            this.hoverBox.setCanvasBoundingRect(this.element.getBoundingClientRect());
         };
 
         this.fillDatesArray = function() {
@@ -643,12 +739,18 @@ var BlockPuzzle = {
                 this.tracks[j].buildDOM(this.chartBodyTransform);
                 this.element.appendChild(this.createTrackLabel(this.tracks[j]));
             }
+
+            if (this.hoverBox !== null)
+                this.hoverBox.remove();
+            this.hoverBox = new BlockPuzzle.HoverBox(this);
         };
 
+        var self = this;
         this.tracks = [];
         this.dates = [];
         this.trackLabels = [];
         this.chartBodyTransform = null;
+        this.hoverBox = null;
 
         // Allow a null element for testing purposes.
         if (elementName !== null) {

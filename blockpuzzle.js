@@ -195,22 +195,30 @@ var BlockPuzzle = {
             if (numberOfPoints == 1)
                 return;
 
-            var previousTop = this.topPoints[numberOfPoints - 2];
-            var previousBottom = this.bottomPoints[numberOfPoints - 2];
-            var leftHeight = previousBottom[1] - previousTop[1];
+            var leftTop = this.topPoints[numberOfPoints - 2];
+            var leftBottom = this.bottomPoints[numberOfPoints - 2];
+            var leftHeight = leftBottom[1] - leftTop[1];
             var rightHeight = bottomPoint[1] - topPoint[1];
             if (leftHeight == rightHeight)
                 return;
 
-            if (leftHeight > rightHeight) {
-                var rightPoint = previousTop[0] - 5;
-                var leftPoint = previousTop[0] - 8;
+            if (leftHeight == 0 || rightHeight == 0) {
+                var bigAdjust = BlockPuzzle.RESERVATION_PADDING;
+                var littleAdjust = BlockPuzzle.RESERVATION_PADDING;
             } else {
-                var rightPoint = topPoint[0] + 8;
-                var leftPoint = topPoint[0] + 5;
+                var bigAdjust = 8;
+                var littleAdjust = 5;
             }
 
-            previousTop[0] = previousBottom[0] = leftPoint;
+            if (leftHeight > rightHeight) {
+                var rightPoint = leftTop[0] - littleAdjust;
+                var leftPoint = leftTop[0] - bigAdjust;
+            } else {
+                var rightPoint = topPoint[0] + bigAdjust;;
+                var leftPoint = topPoint[0] + littleAdjust;
+            }
+
+            leftTop[0] = leftBottom[0] = leftPoint;
             topPoint[0] = bottomPoint[0] = rightPoint;
         };
 

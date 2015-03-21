@@ -147,7 +147,13 @@ var BlockPuzzle = {
         this.positionAndSizeElements = function(canvas, dayIndex) {
             var x = canvas.getDateOffsetXCoordinate(dayIndex);
             this.line.setVisible(this.lastDayOfMonth || canvas.dayWidth > 2);
-            this.line.setPoints([x, 0], [x, canvas.height]);
+
+            // Extend month lines into the label region a bit.
+            var yOrigin = 0;
+            if (this.lastDayOfMonth)
+                yOrigin -= (BlockPuzzle.TRACK_BORDER_WIDTH / 2) + 5;
+
+            this.line.setPoints([x, yOrigin], [x, canvas.height]);
         };
 
         this.containsDate = function(date) {

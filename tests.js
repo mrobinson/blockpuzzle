@@ -272,4 +272,23 @@ QUnit.test("Track.buildSlices", function(assert) {
     assertSliceStartAndEnd(track.slices[2], new Date(2014, 1, 15), new Date(2014, 3, 30), message);
     assertSliceStartAndEnd(track.slices[3], new Date(2014, 4, 1), new Date(2014, 4, 10), message);
     assertSliceStartAndEnd(track.slices[4], new Date(2014, 4, 11), new Date(2014, 11, 31), message);
+
+    track = new BlockPuzzle.Track("Test3", new Date(2014, 0, 1), new Date(2014, 11, 31));
+    track.setReservations([
+        new BlockPuzzle.Reservation("A", new Date(2014, 0, 1), new Date(2014, 0, 20)),
+        new BlockPuzzle.Reservation("B", new Date(2014, 4, 1), new Date(2014, 5, 30)),
+        new BlockPuzzle.Reservation("C", new Date(2014, 2, 1), new Date(2014, 9, 31)),
+        new BlockPuzzle.Reservation("D", new Date(2014, 7, 1), new Date(2014, 8, 30)),
+        new BlockPuzzle.Reservation("E", new Date(2014, 4, 1), new Date(2014, 5, 30))]);
+
+    message = "Complex slices";
+    assert.equal(track.slices.length, 8, message);
+    assertSliceStartAndEnd(track.slices[0], new Date(2014, 0, 1), new Date(2014, 0, 20), message);
+    assertSliceStartAndEnd(track.slices[1], new Date(2014, 0, 21), new Date(2014, 1, 28), message);
+    assertSliceStartAndEnd(track.slices[2], new Date(2014, 2, 1), new Date(2014, 3, 30), message);
+    assertSliceStartAndEnd(track.slices[3], new Date(2014, 4, 1), new Date(2014, 5, 30), message);
+    assertSliceStartAndEnd(track.slices[4], new Date(2014, 6, 1), new Date(2014, 6, 31), message);
+    assertSliceStartAndEnd(track.slices[5], new Date(2014, 7, 1), new Date(2014, 8, 30), message);
+    assertSliceStartAndEnd(track.slices[6], new Date(2014, 9, 1), new Date(2014, 9, 31), message);
+    assertSliceStartAndEnd(track.slices[7], new Date(2014, 10, 1), new Date(2014, 11, 31), message);
 });

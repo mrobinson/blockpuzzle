@@ -348,7 +348,7 @@ var BlockPuzzle = {
             }
 
             dates.sort(function(date1, date2) {
-                return date1 > date2;
+                return date1.getTime() - date2.getTime();
             });
 
             for (var d = 1; d < dates.length; d++) {

@@ -131,11 +131,11 @@ var BlockPuzzle = {
         this.size = [0, 0];
     },
 
-    Day: function(date, lastDayOfMonth) {
+    Day: function(date) {
         this.buildDOM = function(container) {
             if (this.line === null) {
                 this.line = new BlockPuzzle.Line();
-                if (this.lastDayOfMonth)
+                if (this.firstDayOfMonth)
                     this.line.setStroke(2, BlockPuzzle.COLOR_SCHEME.month_line);
                 else
                     this.line.setStroke(1, BlockPuzzle.COLOR_SCHEME.day_line);
@@ -145,12 +145,12 @@ var BlockPuzzle = {
         };
 
         this.positionAndSizeElements = function(canvas, dayIndex) {
-            var x = canvas.getDateOffsetXCoordinate(dayIndex);
-            this.line.setVisible(this.lastDayOfMonth || canvas.dayWidth > 2);
+            var x = canvas.getDateOffsetXCoordinate(dayIndex - 1);
+            this.line.setVisible(this.firstDayOfMonth || canvas.dayWidth > 2);
 
             // Extend month lines into the label region a bit.
             var yOrigin = 0;
-            if (this.lastDayOfMonth)
+            if (this.firstDayOfMonth)
                 yOrigin -= (BlockPuzzle.TRACK_BORDER_WIDTH / 2) + 5;
 
             this.line.setPoints([x, yOrigin], [x, canvas.height]);
@@ -164,7 +164,7 @@ var BlockPuzzle = {
 
         this.line = null;
         this.date = date;
-        this.lastDayOfMonth = lastDayOfMonth;
+        this.firstDayOfMonth = date.getDate() == 1;
     },
 
     Reservation: function(name, start, end, hours) {
@@ -594,14 +594,11 @@ var BlockPuzzle = {
 
         this.fillDatesArray = function() {
             this.dates = [];
-            var currentDate = this.startDate;
+            var currentDate = new Date(this.startDate);
             while (currentDate <= this.endDate) {
-                var nextDate = new Date(currentDate);
-                nextDate.setDate(currentDate.getDate() + 1);
-
-                this.dates.push(new BlockPuzzle.Day(currentDate, nextDate.getDate() == 1));
-
-                currentDate = nextDate;
+                this.dates.push(new BlockPuzzle.Day(currentDate));
+                currentDate = new Date(currentDate);
+                currentDate.setDate(currentDate.getDate() + 1);
             }
         };
 

@@ -23,8 +23,8 @@ var BlockPuzzle = {
     FREE_TIME_HOURS: 5,
 
     TRACK_HEIGHT: 40,
-    TRACK_BORDER_WIDTH: 1,
-    TRACK_GAP: 5,
+    TRACK_BORDER_WIDTH: 2,
+    TRACK_GAP: 10,
 
     // The gap between labels and the thing that they point to.
     LABEL_GAP: 5,
@@ -45,8 +45,8 @@ var BlockPuzzle = {
 
     COLOR_SCHEME: {
         label: "black",
-        track_border: "rgb(256, 0, 0)",
-        month_line: "rgba(100, 100, 100, 0.5)",
+        track_border: "rgba(75, 75, 75, 1)",
+        month_line: "rgba(0, 75, 75, 0.5)",
         day_line: "rgba(200, 200, 200, 0.4)",
         reservations: [
             "#4D4D4D",
@@ -253,7 +253,8 @@ var BlockPuzzle = {
             if (totalHours < BlockPuzzle.AVAILABLE_HOURS)
                 totalHours = BlockPuzzle.AVAILABLE_HOURS;
 
-            var totalPadding = numReservations * BlockPuzzle.RESERVATION_PADDING + BlockPuzzle.TRACK_BORDER_WIDTH;
+            var totalPadding = (numReservations * BlockPuzzle.RESERVATION_PADDING) +
+                (BlockPuzzle.TRACK_BORDER_WIDTH / 2);
             var reservationHeightPerHour = (this.size[1] - totalPadding) / totalHours;
             var totalDrawnHeight = (totalHours * reservationHeightPerHour) + totalPadding;
             var offset = 0;
@@ -514,7 +515,8 @@ var BlockPuzzle = {
 
     Canvas: function(elementName) {
         this.getDateOffsetXCoordinate = function(offset) {
-            return (offset + 1) * this.dayWidth;
+            var halfTrackBorder = BlockPuzzle.TRACK_BORDER_WIDTH / 2;
+            return halfTrackBorder + ((offset + 1) * this.dayWidth);
         };
 
         this.getDateXCoordinate = function(date) {
@@ -536,12 +538,14 @@ var BlockPuzzle = {
                 this.height == this.parentElement.clientHeight)
                 return;
 
-            var heightBetweenTracks = BlockPuzzle.TRACK_HEIGHT + BlockPuzzle.TRACK_GAP;
+            var halfTrackBorder = BlockPuzzle.TRACK_BORDER_WIDTH / 2;
+            var heightBetweenTracks =
+                BlockPuzzle.TRACK_HEIGHT + BlockPuzzle.TRACK_GAP + halfTrackBorder;
             this.height = BlockPuzzle.CANVAS_TOP_LABEL_HEIGHT +
                 (heightBetweenTracks * this.tracks.length) - BlockPuzzle.TRACK_GAP;
             this.width = this.parentElement.clientWidth;
-            this.trackWidth = canvas.width - BlockPuzzle.TRACK_LEFT_LABEL_WIDTH;
-            this.dayWidth = this.trackWidth / this.dates.length;
+            this.trackWidth = canvas.width - BlockPuzzle.TRACK_LEFT_LABEL_WIDTH - halfTrackBorder;
+            this.dayWidth = (this.trackWidth - halfTrackBorder) / this.dates.length;
 
             this.element.style.width = this.width;
             this.element.style.height = this.height;

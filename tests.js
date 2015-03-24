@@ -77,6 +77,7 @@ QUnit.test("convertTextToData reservations", function(assert) {
         tracks: [ {
             name: 'User One',
             reservations: [ { name: 'Reservation One',  
+                              confirmed: true,
                               hours: null,
                               start: new Date(2001, 0, 1, 0, 0, 0, 0),
                               end: new Date(2001, 2, 31, 0, 0, 0, 0) } ],
@@ -90,6 +91,7 @@ QUnit.test("convertTextToData reservations", function(assert) {
         tracks: [ {
             name: 'User One',
             reservations: [ { name: 'Reservation One', 
+                              confirmed: true,
                               hours: null,
                               start: new Date(2009, 0, 21, 0, 0, 0, 0),
                               end: new Date(2009, 1, 23, 0, 0, 0, 0) } ],
@@ -103,6 +105,7 @@ QUnit.test("convertTextToData reservations", function(assert) {
         tracks: [ {
             name: 'User One',
             reservations: [ { name: 'Reservation One',
+                              confirmed: true,
                               hours: 30,
                               start: new Date(2009, 5, 1, 0, 0, 0, 0),
                               end: new Date(2009, 11, 31, 0, 0, 0, 0) } ],
@@ -111,10 +114,8 @@ QUnit.test("convertTextToData reservations", function(assert) {
 
     data = BlockPuzzle.convertTextToData("* User One\n - Reservation One: Q3/2009-Q4/2009, 30hrs");
     assert.propEqual(data, rangeReservation, "Reservation with more complex range");
-
     data = BlockPuzzle.convertTextToData(" - Reservation One: Q3/2009-Q4/2009, 30");
     assert.propEqual(data, emptyData, "Don't add data when there is no current track.");
-
     data = BlockPuzzle.convertTextToData("\t\n - \tReservation One: Q3/2009-Q4/2009, 30 hrs");
     assert.propEqual(data, emptyData, "Don't add data when there is no current track.");
 
@@ -127,6 +128,21 @@ QUnit.test("convertTextToData reservations", function(assert) {
 
     data = BlockPuzzle.convertTextToData("* User One\n - \t: Q3-Q4");
     assert.propEqual(data, emptyTrack, "Don't add reservation when the name is empty.");
+
+    unconfirmedRangeReservation = {
+        tracks: [ {
+            name: 'User One',
+            reservations: [ { name: 'Reservation One',
+                              confirmed: false,
+                              hours: 30,
+                              start: new Date(2009, 5, 1, 0, 0, 0, 0),
+                              end: new Date(2009, 11, 31, 0, 0, 0, 0) } ],
+        } ],
+    };
+
+    data = BlockPuzzle.convertTextToData("* User One\n + Reservation One: Q3/2009-Q4/2009, 30hrs");
+    assert.propEqual(data, unconfirmedRangeReservation,
+                     "Unconfirmed Reservation with more complex range");
 });
 
 QUnit.test("dateStringToDate", function(assert) {

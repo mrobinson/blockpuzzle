@@ -192,7 +192,7 @@ var BlockPuzzle = {
         this.firstDayOfMonth = date.getDate() == 1;
     },
 
-    Reservation: function(name, start, end, hours, options) {
+    Reservation: function(name, start, end, hours, confirmed, options) {
         this.buildDOM = function(container) {
             if (this.path === null)
                 this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -212,6 +212,7 @@ var BlockPuzzle = {
 
             this.path.setAttribute("d", pathString);
             this.path.setAttribute("fill", BlockPuzzle.Reservation.getColorForReservation(this));
+            this.path.setAttribute("fill-opacity", this.confirmed ? "1" : "0.6");
 
             this.topPoints = [];
             this.bottomPoints = [];
@@ -263,6 +264,7 @@ var BlockPuzzle = {
         // Normalize dates to all be at midnight.
         this.start = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
         this.end = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 0, 0, 0, 0);
+        this.confirmed = confirmed === undefined || confirmed;
         this.topPoints = [];
         this.bottomPoints = [];
         this.path = null;
@@ -697,6 +699,7 @@ var BlockPuzzle = {
                                                                   reservation.start,
                                                                   reservation.end,
                                                                   reservation.hours,
+                                                                  reservation.confirmed,
                                                                   this.options));
                 }
                 track.setReservations(reservations);
@@ -809,7 +812,7 @@ var BlockPuzzle = {
         var data = {tracks: []};
         var settingRegex = /^(\w+):([^\n]*)$/;
         var trackRegex = /^\s*\*([^\n]+)$/;
-        var reservationRegex = /^\s*-([^:]+):\s*([^\n]*)\s*$/;
+        var reservationRegex = /^\s*(-|\+)([^:]+):\s*([^\n]*)\s*$/;
         var currentTrack = null;
 
         for (var i = 0; i < lines.length; i++) {
@@ -840,11 +843,11 @@ var BlockPuzzle = {
                     console.error("Couldn't add reservation, because no current Track.");
                     continue;
                 }
-                var reservationName = reservationMatch[1].trim();
+                var reservationName = reservationMatch[2].trim();
                 if (reservationName.length === 0)
                     continue;
 
-                var dateAndHoursStrings = reservationMatch[2].split(",");
+                var dateAndHoursStrings = reservationMatch[3].split(",");
                 var dateRangeString = dateAndHoursStrings[0].trim();
                 var dates = BlockPuzzle.dateRangeToDates(dateRangeString);
                 if (dates === null) {
@@ -860,6 +863,7 @@ var BlockPuzzle = {
 
                 currentTrack.reservations.push({
                     name: reservationName,
+                    confirmed: reservationMatch[1] === "-",
                     start: dates[0],
                     end: dates[1],
                     hours: hours,

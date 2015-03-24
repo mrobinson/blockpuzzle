@@ -15,49 +15,70 @@
  */
 
 var BlockPuzzle = {
-    AVAILABLE_HOURS: 40,
+    Options: function(template) {
+        this.overrideNumberFromTemplate = function(template, key, defaultValue, number) {
+            if (template === undefined || template[key] === undefined)
+                this[key] = defaultValue;
+            else
+                this[key] = parseFloat(template[key]);
+        };
 
-    // When reservations don't have any hours specified, free time can optionally steal
-    // some of those hours. These hours, as with other reservations with no hours
-    // specified will not be allocated if the available hours are totally consumed.
-    FREE_TIME_HOURS: 5,
+        this.overrideValueFromTemplate = function(template, key, defaultValue, number) {
+            if (template === undefined || template[key] === undefined)
+                this[key] = defaultValue;
+            else
+                this[key] = template[key];
+        };
 
-    TRACK_HEIGHT: 40,
-    TRACK_BORDER_WIDTH: 2,
-    TRACK_GAP: 10,
+        this.overrideNumberFromTemplate(template, "AVAILABLE_HOURS", 40);
 
-    // The gap between labels and the thing that they point to.
-    LABEL_GAP: 5,
+        // When reservations don't have any hours specified, free time can optionally steal
+        // some of those hours. These hours, as with other reservations with no hours
+        // specified will not be allocated if the available hours are totally consumed.
+        this.overrideNumberFromTemplate(template, "FREE_TIME_HOURS", 5);
 
-    // The font size for the labels.
-    LABEL_FONT_SIZE: 10,
+        // The height of the track.
+        this.overrideNumberFromTemplate(template, "TRACK_HEIGHT", 40);
 
-    // The font family for the labels.
-    LABEL_FONT_FAMILY: "sans-serif",
+        // The size of the border that surrounds tracks.
+        this.overrideNumberFromTemplate(template, "TRACK_BORDER_WIDTH", 2);
 
-    // The space on the left hand side of the chart used to print the track name.
-    TRACK_LEFT_LABEL_WIDTH: 100,
+        this.overrideNumberFromTemplate(template, "TRACK_GAP", 10);
 
-    // The space on the left hand side of the chart used to print the track name.
-    CANVAS_TOP_LABEL_HEIGHT: 40,
+        // The gap between labels and the thing that they point to.
+        this.overrideNumberFromTemplate(template, "LABEL_GAP", 5);
 
-    RESERVATION_PADDING: 1,
+        // The font size for the labels.
+        this.overrideNumberFromTemplate(template, "LABEL_FONT_SIZE", 10);
 
-    COLOR_SCHEME: {
-        label: "black",
-        track_border: "rgba(75, 75, 75, 1)",
-        month_line: "rgba(0, 75, 75, 0.5)",
-        day_line: "rgba(200, 200, 200, 0.4)",
-        reservations: [
-            "#4D4D4D",
-            "#5DA5DA",
-            "#FAA43A",
-            "#60BD68",
-            "#B2912F",
-            "#B276B2",
-            "#DECF3F",
-            "#F15854",
-        ],
+        // The font family for the labels.
+        this.overrideValueFromTemplate(template, "LABEL_FONT_FAMILY", "sans-serif");
+
+        // The space on the left hand side of the chart used to print the track name.
+        this.overrideNumberFromTemplate(template, "TRACK_LEFT_LABEL_WIDTH", 100);
+
+        // The space on the left hand side of the chart used to print the track name.
+        this.overrideNumberFromTemplate(template, "CANVAS_TOP_LABEL_HEIGHT", 40);
+
+        // The vertical padding between reservations within a track.
+        this.overrideNumberFromTemplate(template, "RESERVATION_PADDING", 1);
+
+        this.COLOR_SCHEME = {
+            label: "black",
+            track_border: "rgba(75, 75, 75, 1)",
+            month_line: "rgba(0, 75, 75, 0.5)",
+            day_line: "rgba(200, 200, 200, 0.4)",
+            reservations: [
+                "#4D4D4D",
+                "#5DA5DA",
+                "#FAA43A",
+                "#60BD68",
+                "#B2912F",
+                "#B276B2",
+                "#DECF3F",
+                "#F15854",
+            ],
+        };
     },
 
     Line: function() {
@@ -131,14 +152,14 @@ var BlockPuzzle = {
         this.size = [0, 0];
     },
 
-    Day: function(date) {
+    Day: function(date, options) {
         this.buildDOM = function(container) {
             if (this.line === null) {
                 this.line = new BlockPuzzle.Line();
                 if (this.firstDayOfMonth)
-                    this.line.setStroke(2, BlockPuzzle.COLOR_SCHEME.month_line);
+                    this.line.setStroke(2, this.options.COLOR_SCHEME.month_line);
                 else
-                    this.line.setStroke(1, BlockPuzzle.COLOR_SCHEME.day_line);
+                    this.line.setStroke(1, this.options.COLOR_SCHEME.day_line);
             }
 
             container.appendChild(this.line.getElement());
@@ -151,7 +172,7 @@ var BlockPuzzle = {
             // Extend month lines into the label region a bit.
             var yOrigin = 0;
             if (this.firstDayOfMonth)
-                yOrigin -= (BlockPuzzle.TRACK_BORDER_WIDTH / 2) + 5;
+                yOrigin -= (this.options.TRACK_BORDER_WIDTH / 2) + 5;
 
             this.line.setPoints([x, yOrigin], [x, canvas.height]);
         };
@@ -162,12 +183,16 @@ var BlockPuzzle = {
                    date.getDate() == this.date.getDate();
         };
 
+        this.options = options;
+        if (this.options === undefined)
+            this.options = BlockPuzzle.Options.defaults();
+
         this.line = null;
         this.date = date;
         this.firstDayOfMonth = date.getDate() == 1;
     },
 
-    Reservation: function(name, start, end, hours) {
+    Reservation: function(name, start, end, hours, options) {
         this.buildDOM = function(container) {
             if (this.path === null)
                 this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -229,6 +254,10 @@ var BlockPuzzle = {
             this.path.onmousemove = handler.bind(this, this);
         };
 
+        this.options = options;
+        if (this.options === undefined)
+            this.options = BlockPuzzle.Options.defaults();
+
         this.name = name;
 
         // Normalize dates to all be at midnight.
@@ -244,7 +273,7 @@ var BlockPuzzle = {
             this.hours = null;
     },
 
-    Slice: function(start, end) {
+    Slice: function(start, end, options) {
         this.totalHoursReserved = function() {
             var total = this.unusedHours;
             for (var i = 0; i < this.reservationHours.length; i++)
@@ -256,11 +285,11 @@ var BlockPuzzle = {
             var numReservations = this.reservations.length;
 
             var totalHours = this.totalHoursReserved();
-            if (totalHours < BlockPuzzle.AVAILABLE_HOURS)
-                totalHours = BlockPuzzle.AVAILABLE_HOURS;
+            if (totalHours < this.options.AVAILABLE_HOURS)
+                totalHours = this.options.AVAILABLE_HOURS;
 
-            var totalPadding = (numReservations * BlockPuzzle.RESERVATION_PADDING) +
-                (BlockPuzzle.TRACK_BORDER_WIDTH / 2);
+            var totalPadding = (numReservations * this.options.RESERVATION_PADDING) +
+                (this.options.TRACK_BORDER_WIDTH / 2);
             var reservationHeightPerHour = (this.size[1] - totalPadding) / totalHours;
             var totalDrawnHeight = (totalHours * reservationHeightPerHour) + totalPadding;
             var offset = 0;
@@ -273,17 +302,17 @@ var BlockPuzzle = {
                                       [origin[0] + size[0], offset + height], dayWidth);
             }
 
-            offset += BlockPuzzle.TRACK_BORDER_WIDTH / 2;
+            offset += this.options.TRACK_BORDER_WIDTH / 2;
             for (var i = 0; i < this.reservations.length; i++) {
                 var reservationHeight = reservationHeightPerHour * this.reservationHours[i];
                 setReservationPoints(this.reservations[i], offset, reservationHeight);
-                offset += reservationHeight + BlockPuzzle.RESERVATION_PADDING;
+                offset += reservationHeight + this.options.RESERVATION_PADDING;
             }
         };
 
         this.calculateHoursForReservations = function() {
             this.reservationHours = [];
-            var hoursLeft = BlockPuzzle.AVAILABLE_HOURS;
+            var hoursLeft = this.options.AVAILABLE_HOURS;
             var numReservationsWithoutHours = 0;
             for (var i = 0; i < this.reservations.length; i++) {
                 var reservation = this.reservations[i];
@@ -298,8 +327,8 @@ var BlockPuzzle = {
 
             this.unusedHours = 0;
             if (hoursLeft > 0) {
-                hoursLeft -= BlockPuzzle.FREE_TIME_HOURS;
-                this.unusedHours = BlockPuzzle.FREE_TIME_HOURS;
+                hoursLeft -= this.options.FREE_TIME_HOURS;
+                this.unusedHours = this.options.FREE_TIME_HOURS;
             }
             if (numReservationsWithoutHours === 0) {
                 this.unusedHours += hoursLeft;
@@ -318,6 +347,10 @@ var BlockPuzzle = {
             return reservation.end >= this.start && reservation.start < this.end;
         };
 
+        this.options = options;
+        if (this.options === undefined)
+            this.options = BlockPuzzle.Options.defaults();
+
         this.start = start;
         this.end = end;
         this.reservations = [];
@@ -327,7 +360,7 @@ var BlockPuzzle = {
         this.unusedHours = 0;
     },
 
-    Track: function(name, start, end) {
+    Track: function(name, start, end, options) {
         this.buildSlices = function(container) {
             var dates = [];
             function addStartAndEndToDates(start, end) {
@@ -357,7 +390,7 @@ var BlockPuzzle = {
 
                 var end = new Date(dates[d]);
                 end.setDate(end.getDate() - 1);
-                var slice = new BlockPuzzle.Slice(dates[d-1], end);
+                var slice = new BlockPuzzle.Slice(dates[d-1], end, this.options);
                 this.slices.push(slice);
             }
 
@@ -383,8 +416,8 @@ var BlockPuzzle = {
             if (this.rect === null) {
                 this.rect = new BlockPuzzle.Rect();
                 this.rect.setFill("rgba(0, 0, 0, 0)");
-                this.rect.setStroke(BlockPuzzle.TRACK_BORDER_WIDTH,
-                                    BlockPuzzle.COLOR_SCHEME.track_border);
+                this.rect.setStroke(this.options.TRACK_BORDER_WIDTH,
+                                    this.options.COLOR_SCHEME.track_border);
             }
 
             this.transform.appendChild(this.rect.getElement());
@@ -411,7 +444,7 @@ var BlockPuzzle = {
                 var width = canvas.getDateXCoordinate(slice.end) - x;
 
                 slice.origin = [x, this.origin[1]];
-                slice.size = [width, BlockPuzzle.TRACK_HEIGHT];
+                slice.size = [width, this.options.TRACK_HEIGHT];
                 slice.addPointsToReservations(canvas.dayWidth);
             }
 
@@ -432,6 +465,11 @@ var BlockPuzzle = {
         };
 
         var self = this;
+
+        this.options = options;
+        if (this.options === undefined)
+            this.options = BlockPuzzle.Options.defaults();
+
         this.start = start;
         this.end = end;
         this.origin = [0, 0];
@@ -521,7 +559,7 @@ var BlockPuzzle = {
 
     Canvas: function(elementName) {
         this.getDateOffsetXCoordinate = function(offset) {
-            var halfTrackBorder = BlockPuzzle.TRACK_BORDER_WIDTH / 2;
+            var halfTrackBorder = this.options.TRACK_BORDER_WIDTH / 2;
             return halfTrackBorder + ((offset + 1) * this.dayWidth);
         };
 
@@ -544,21 +582,21 @@ var BlockPuzzle = {
                 this.height == this.parentElement.clientHeight)
                 return;
 
-            var halfTrackBorder = BlockPuzzle.TRACK_BORDER_WIDTH / 2;
+            var halfTrackBorder = this.options.TRACK_BORDER_WIDTH / 2;
             var heightBetweenTracks =
-                BlockPuzzle.TRACK_HEIGHT + BlockPuzzle.TRACK_GAP + halfTrackBorder;
-            this.height = BlockPuzzle.CANVAS_TOP_LABEL_HEIGHT +
-                (heightBetweenTracks * this.tracks.length) - BlockPuzzle.TRACK_GAP;
+                this.options.TRACK_HEIGHT + this.options.TRACK_GAP + halfTrackBorder;
+            this.height = this.options.CANVAS_TOP_LABEL_HEIGHT +
+                (heightBetweenTracks * this.tracks.length) - this.options.TRACK_GAP;
             this.width = this.parentElement.clientWidth;
-            this.trackWidth = canvas.width - BlockPuzzle.TRACK_LEFT_LABEL_WIDTH - halfTrackBorder;
+            this.trackWidth = canvas.width - this.options.TRACK_LEFT_LABEL_WIDTH - halfTrackBorder;
             this.dayWidth = (this.trackWidth - halfTrackBorder) / this.dates.length;
 
             this.element.style.width = this.width;
             this.element.style.height = this.height;
             this.element.setAttribute("viewBox", "0 0 " + this.width + " " + this.height);
             this.chartBodyTransform.setAttribute("transform",
-                "translate(" + BlockPuzzle.TRACK_LEFT_LABEL_WIDTH + ", " +
-                               BlockPuzzle.CANVAS_TOP_LABEL_HEIGHT + ")");
+                "translate(" + this.options.TRACK_LEFT_LABEL_WIDTH + ", " +
+                               this.options.CANVAS_TOP_LABEL_HEIGHT + ")");
 
             for (var i = 0; i < this.dates.length; i++) {
                 this.dates[i].positionAndSizeElements(canvas, i);
@@ -567,8 +605,8 @@ var BlockPuzzle = {
             for (var j = 0; j < this.monthLabels.length; j++) {
                 var label = this.monthLabels[j];
                 var origin =
-                    [BlockPuzzle.TRACK_LEFT_LABEL_WIDTH + canvas.getDateXCoordinate(label.date),
-                     BlockPuzzle.CANVAS_TOP_LABEL_HEIGHT - BlockPuzzle.LABEL_GAP];
+                    [this.options.TRACK_LEFT_LABEL_WIDTH + canvas.getDateXCoordinate(label.date),
+                     this.options.CANVAS_TOP_LABEL_HEIGHT - this.options.LABEL_GAP];
 
                 label.setAttribute("x", origin[0]);
                 label.setAttribute("y", origin[1]);
@@ -579,14 +617,14 @@ var BlockPuzzle = {
                 var trackYOrigin = heightBetweenTracks * k;
                 var track = this.tracks[k];
                 track.origin = [0, trackYOrigin];
-                track.size = [this.trackWidth, BlockPuzzle.TRACK_HEIGHT];
+                track.size = [this.trackWidth, this.options.TRACK_HEIGHT];
                 track.positionAndSizeElements(canvas);
 
                 var trackLabel = this.trackLabels[k];
-                trackLabel.setAttribute("y", BlockPuzzle.CANVAS_TOP_LABEL_HEIGHT +
+                trackLabel.setAttribute("y", this.options.CANVAS_TOP_LABEL_HEIGHT +
                                              trackYOrigin + (heightBetweenTracks / 2));
                 trackLabel.setAttribute("x",
-                                        BlockPuzzle.TRACK_LEFT_LABEL_WIDTH - BlockPuzzle.LABEL_GAP);
+                                        this.options.TRACK_LEFT_LABEL_WIDTH - this.options.LABEL_GAP);
             }
 
             this.hoverBox.setCanvasBoundingRect(this.element.getBoundingClientRect());
@@ -596,7 +634,7 @@ var BlockPuzzle = {
             this.dates = [];
             var currentDate = new Date(this.startDate);
             while (currentDate <= this.endDate) {
-                this.dates.push(new BlockPuzzle.Day(currentDate));
+                this.dates.push(new BlockPuzzle.Day(currentDate, this.options));
                 currentDate = new Date(currentDate);
                 currentDate.setDate(currentDate.getDate() + 1);
             }
@@ -630,22 +668,36 @@ var BlockPuzzle = {
             this.fillDatesArray();
         };
 
+        this.setOptions = function(options ) {
+            this.options = new BlockPuzzle.Options(options);
+        };
+
         this.setData = function(data) {
+            this.data = data;
+            this.rebuild();
+        };
+
+        this.rebuild = function() {
             this.tracks = [];
             this.dates = [];
 
-            this.calculateStartAndEndDatesFromData(data);
+            this.calculateStartAndEndDatesFromData(this.data);
 
-            var tracks = data.tracks;
+            var tracks = this.data.tracks;
             for (var i = 0; i < tracks.length; i++) {
-                var track = new BlockPuzzle.Track(tracks[i].name, this.startDate, this.endDate);
+                var track = new BlockPuzzle.Track(tracks[i].name,
+                                                  this.startDate,
+                                                  this.endDate,
+                                                  this.options);
+
                 var reservations = [];
                 for (var j = 0; j < tracks[i].reservations.length; j++) {
                     var reservation = tracks[i].reservations[j];
                     reservations.push(new BlockPuzzle.Reservation(reservation.name,
                                                                   reservation.start,
                                                                   reservation.end,
-                                                                  reservation.hours));
+                                                                  reservation.hours,
+                                                                  this.options));
                 }
                 track.setReservations(reservations);
                 this.tracks.push(track);
@@ -657,9 +709,9 @@ var BlockPuzzle = {
 
         this.createLabel = function(text) {
             var label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            label.setAttribute("font-size", BlockPuzzle.LABEL_FONT_SIZE);
-            label.setAttribute("font-family", BlockPuzzle.LABEL_FONT_FAMILY);
-            label.setAttribute("fill", BlockPuzzle.COLOR_SCHEME.label);
+            label.setAttribute("font-size", this.options.LABEL_FONT_SIZE);
+            label.setAttribute("font-family", this.options.LABEL_FONT_FAMILY);
+            label.setAttribute("fill", this.options.COLOR_SCHEME.label);
             label.appendChild(document.createTextNode(text));
             return label;
         };
@@ -698,7 +750,7 @@ var BlockPuzzle = {
             this.chartBodyTransform =
                 document.createElementNS("http://www.w3.org/2000/svg", "g");
             this.chartBodyTransform.setAttribute("transform",
-                "translate(" + BlockPuzzle.TRACK_LEFT_LABEL_WIDTH + ", 0)");
+                "translate(" + this.options.TRACK_LEFT_LABEL_WIDTH + ", 0)");
             this.element.appendChild(this.chartBodyTransform);
 
             for (var i = 0; i < this.dates.length; i++) {
@@ -719,6 +771,7 @@ var BlockPuzzle = {
         };
 
         var self = this;
+        this.options = BlockPuzzle.Options.defaults();
         this.tracks = [];
         this.dates = [];
         this.trackLabels = [];
@@ -764,7 +817,7 @@ var BlockPuzzle = {
 
             var settingMatch = settingRegex.exec(line);
             if (settingMatch) {
-                var key = settingMatch[1].toLowerCase().trim();
+                var key = settingMatch[1].trim();
                 var value = settingMatch[2].trim();
                 data[key] = value;
                 continue;
@@ -893,16 +946,24 @@ var BlockPuzzle = {
 BlockPuzzle.Reservation.getColorForReservation = function(reservation) {
     if (BlockPuzzle.Reservation.colorMap === undefined) {
         BlockPuzzle.Reservation.colorMap = {};
-        BlockPuzzle.Reservation.unusedColors = BlockPuzzle.COLOR_SCHEME.reservations.slice();
+        BlockPuzzle.Reservation.unusedColors =
+            reservation.options.COLOR_SCHEME.reservations.slice();
     }
 
     var colorMap = BlockPuzzle.Reservation.colorMap;
     var key = "__" + reservation.name;
     if (colorMap[key] === undefined) {
         if (BlockPuzzle.Reservation.unusedColors.length === 0)
-            BlockPuzzle.Reservation.unusedColors = BlockPuzzle.COLOR_SCHEME.reservations.slice();
+            BlockPuzzle.Reservation.unusedColors =
+                reservation.options.COLOR_SCHEME.reservations.slice();
         colorMap[key] = BlockPuzzle.Reservation.unusedColors.pop();
     }
 
     return colorMap[key];
+};
+
+BlockPuzzle.Options.defaults = function() {
+    if (BlockPuzzle.Options.defaultOptions === undefined)
+        BlockPuzzle.Options.defaultOptions = new BlockPuzzle.Options();
+    return BlockPuzzle.Options.defaultOptions;
 };

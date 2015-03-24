@@ -21,6 +21,7 @@
     function updateGraph() {
         var text = document.getElementById("projects").value;
         var data = BlockPuzzle.convertTextToData(text);
+        canvas.setOptions(data);
         canvas.setData(data);
     }
     updateGraph();

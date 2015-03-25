@@ -46,7 +46,7 @@ var BlockPuzzle = {
         this.overrideNumberFromTemplate(template, "TRACK_GAP", 10);
 
         // The gap between labels and the thing that they point to.
-        this.overrideNumberFromTemplate(template, "LABEL_GAP", 5);
+        this.overrideNumberFromTemplate(template, "LABEL_GAP", 8);
 
         // The font size for the labels.
         this.overrideNumberFromTemplate(template, "LABEL_FONT_SIZE", 10);
@@ -68,7 +68,7 @@ var BlockPuzzle = {
             track_border: "rgba(75, 75, 75, 1)",
             month_line: "rgba(0, 75, 75, 0.5)",
             day_line: "rgba(200, 200, 200, 0.4)",
-            highlight_line: "rgba(200, 0, 0, 0.5)",
+            highlight_line: "rgba(200, 0, 0, 1)",
             reservations: [
                 "#4D4D4D",
                 "#5DA5DA",
@@ -219,7 +219,7 @@ var BlockPuzzle = {
 
         this.getOriginForDayIndex = function(dayIndex) {
             // Extend month lines up into the label region a bit.
-            var monthOffset = -(this.options.TRACK_BORDER_WIDTH / 2) - this.options.LABEL_GAP + 1;
+            var monthOffset = -(this.options.TRACK_BORDER_WIDTH / 2) - this.options.LABEL_GAP + 2;
             return [
                 this.origin[0] + (dayIndex * this.dayWidth),
                 this.origin[1] + this.days[dayIndex].firstDayOfMonth ? monthOffset : 0

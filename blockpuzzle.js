@@ -166,6 +166,19 @@ var BlockPuzzle = {
             container.appendChild(this.line.getElement());
         };
 
+        this.getMonthString = function() {
+            // FIXME: We can do better than this. Consider Moment.js.
+            return  ["Jan", "Feb", "Mar", "Apr",
+                     "May", "Jun", "Jul", "Aug",
+                     "Sep", "Oct", "Nov", "Dec"][date.getMonth()] +
+                    " " + date.getFullYear();
+        };
+
+        this.getDateString = function() {
+            // FIXME: We can do better than this. Consider Moment.js.
+            return this.date.getDate() + " " + this.getMonthString();
+        };
+
         this.positionAndSizeElements = function(dateGrid) {
             this.line.setPoints([this.origin[0], this.origin[1]],
                                 [this.origin[0], this.size[1]]);
@@ -246,19 +259,22 @@ var BlockPuzzle = {
             y -= this.origin[1];
 
             if (x < 0 || x > this.size[0] || y < 0 || y > this.size[1]) {
-                this.highlightLine.setVisible(false);
+                this.handleMouseLeave();
                 return;
             }
 
-            var origin = this.getOriginForDayIndex(Math.round(x / this.dayWidth));
+            var index = Math.round(x / this.dayWidth);
+            var origin = this.getOriginForDayIndex(index);
             this.highlightLine.setPoints(
                 [origin[0], origin[1]],
                 [origin[0], this.size[1]]);
             this.highlightLine.setVisible(true);
+            this.hoveredDay = this.days[index];
         };
 
         this.handleMouseLeave = function(x, y) {
             this.highlightLine.setVisible(false);
+            this.hoveredDay = null;
         };
 
         this.days = [];
@@ -268,6 +284,7 @@ var BlockPuzzle = {
         this.origin = [0, 0];
         this.size = [0, 0];
         this.highlightLine = null;
+        this.hoveredDay = null;
 
         this.options = options;
         if (this.options === undefined)
@@ -581,8 +598,12 @@ var BlockPuzzle = {
             this.currentReservation = reservation;
         };
 
+        this.setCurrentDay = function(day) {
+            this.currentDay = day;
+        };
+
         this.handleMouseMove = function(event) {
-            if (!this.currentTrack || !this.currentReservation) {
+            if (!this.currentDay) {
                 this.element.style.display = "none";
                 return;
             }
@@ -594,9 +615,13 @@ var BlockPuzzle = {
 
             this.element.style.left = leftOrigin + "px";
             this.element.style.top = event.pageY + "px";
-            this.element.innerHTML =
-                "<b>Person:</b> " + this.currentTrack.name + "<br/>" +
-                "<b>Working on:</b> " + this.currentReservation.name;
+            var content = "<b>" + this.currentDay.getDateString() + "<br/>";
+            if (this.currentTrack !== null && this.currentReservation !== null) {
+                content += "<b>Person:</b> " + this.currentTrack.name + "<br/>" +
+                           "<b>Working on:</b> " + this.currentReservation.name;
+            }
+
+            this.element.innerHTML = content;
             this.element.style.display = "";
 
             // Reset these so that we can detect if we are over a reservation at the
@@ -629,6 +654,7 @@ var BlockPuzzle = {
         this.canvas = canvas;
         this.currentReservation = null;
         this.currentTrack = null;
+        this.currentDay = null;
         this.canvasBoundingRect = null;
     },
 
@@ -773,15 +799,9 @@ var BlockPuzzle = {
             return label;
         };
 
-        this.createMonthLabel = function(date) {
-            // FIXME: We can do better than this. Consider Moment.js.
-            var text = ["Jan", "Feb", "Mar", "Apr",
-                        "May", "Jun", "Jul", "Aug",
-                        "Sep", "Oct", "Nov", "Dec"][date.getMonth()] +
-                       " " + date.getFullYear();
-
-            var label = this.createLabel(text);
-            label.date = date;
+        this.createMonthLabel = function(day) {
+            var label = this.createLabel(day.getMonthString());
+            label.date = day.date;
             this.monthLabels.push(label);
             return label;
         };
@@ -807,7 +827,7 @@ var BlockPuzzle = {
 
             this.dateGrid.forEachDay(function(day) {
                 if (day.firstDayOfMonth)
-                    this.element.appendChild(this.createMonthLabel(day.date));
+                    this.element.appendChild(this.createMonthLabel(day));
             }.bind(this));
 
             for (var j = 0; j < this.tracks.length; j++) {
@@ -832,12 +852,14 @@ var BlockPuzzle = {
             this.element.onmousemove = function(event) {
                 if (!event)
                     event = window.event;
-                hover.handleMouseMove(event);
 
                 var canvasRect = canvas.element.getBoundingClientRect();
                 canvas.dateGrid.handleMouseMove(
                     event.pageX - canvas.options.TRACK_LEFT_LABEL_WIDTH - canvasRect.left,
                     event.pageY - canvas.options.CANVAS_TOP_LABEL_HEIGHT - canvasRect.top);
+                hover.setCurrentDay(canvas.dateGrid.hoveredDay);
+
+                hover.handleMouseMove(event);
             };
 
             this.element.onmouseleave = function(event) {

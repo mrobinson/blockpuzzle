@@ -68,6 +68,7 @@ var BlockPuzzle = {
             track_border: "rgba(75, 75, 75, 1)",
             month_line: "rgba(0, 75, 75, 0.5)",
             day_line: "rgba(200, 200, 200, 0.4)",
+            highlight_line: "rgba(200, 0, 0, 0.5)",
             reservations: [
                 "#4D4D4D",
                 "#5DA5DA",
@@ -196,6 +197,11 @@ var BlockPuzzle = {
             for (var i = 0; i < this.days.length; i++) {
                 this.days[i].buildDOM(container);
             }
+
+            this.highlightLine = new BlockPuzzle.Line();
+            this.highlightLine.setVisible(false);
+            this.highlightLine.setStroke(2, this.options.COLOR_SCHEME.highlight_line);
+            container.appendChild(this.highlightLine.getElement());
         };
 
         this.getOriginForDayIndex = function(dayIndex) {
@@ -235,12 +241,33 @@ var BlockPuzzle = {
             }
         };
 
+        this.handleMouseMove = function(x, y) {
+            x -= this.origin[0];
+            y -= this.origin[1];
+
+            if (x < 0 || x > this.size[0] || y < 0 || y > this.size[1]) {
+                this.highlightLine.setVisible(false);
+                return;
+            }
+
+            var origin = this.getOriginForDayIndex(Math.round(x / this.dayWidth));
+            this.highlightLine.setPoints(
+                [origin[0], origin[1]],
+                [origin[0], this.size[1]]);
+            this.highlightLine.setVisible(true);
+        };
+
+        this.handleMouseLeave = function(x, y) {
+            this.highlightLine.setVisible(false);
+        };
+
         this.days = [];
         this.elements = [];
         this.startDate = startDate;
         this.endDate = endDate;
         this.origin = [0, 0];
         this.size = [0, 0];
+        this.highlightLine = null;
 
         this.options = options;
         if (this.options === undefined)
@@ -806,10 +833,16 @@ var BlockPuzzle = {
                 if (!event)
                     event = window.event;
                 hover.handleMouseMove(event);
+
+                var canvasRect = canvas.element.getBoundingClientRect();
+                canvas.dateGrid.handleMouseMove(
+                    event.pageX - canvas.options.TRACK_LEFT_LABEL_WIDTH - canvasRect.left,
+                    event.pageY - canvas.options.CANVAS_TOP_LABEL_HEIGHT - canvasRect.top);
             };
 
             this.element.onmouseleave = function(event) {
                 hover.hide();
+                canvas.dateGrid.handleMouseLeave();
             };
         };
 

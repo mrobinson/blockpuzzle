@@ -546,24 +546,40 @@ var BlockPuzzle = {
     },
 
     HoverBox: function(canvas) {
-        this.remove = function() {
-            if (this.element === null)
-                return;
-
-            document.body.removeChild(this.element);
-            this.element = null;
-        };
-
-        this.setCanvasBoundingRect = function(rect) {
-            this.canvasBoundingRect = rect;
-        };
-
         this.setCurrentTrack = function(track) {
             this.currentTrack = track;
         };
 
         this.setCurrentReservation = function(reservation) {
             this.currentReservation = reservation;
+        };
+
+        this.handleMouseMove = function(event) {
+            if (!this.currentTrack || !this.currentReservation) {
+                this.element.style.display = "none";
+                return;
+            }
+
+            var leftOrigin = event.pageX;
+            var canvasBoundingRect = canvas.element.getBoundingClientRect();
+            if (event.pageX + 140 > canvasBoundingRect.right)
+                 leftOrigin = event.pageX - 140;
+
+            this.element.style.left = leftOrigin + "px";
+            this.element.style.top = event.pageY + "px";
+            this.element.innerHTML =
+                "<b>Person:</b> " + this.currentTrack.name + "<br/>" +
+                "<b>Working on:</b> " + this.currentReservation.name;
+            this.element.style.display = "";
+
+            // Reset these so that we can detect if we are over a reservation at the
+            // next mouse move event.
+            this.currentTrack = null;
+            this.currentReservation = null;
+        };
+
+        this.hide = function() {
+            this.element.style.display = "none";
         };
 
         this.element = document.createElement("div");
@@ -583,39 +599,7 @@ var BlockPuzzle = {
 
         document.body.appendChild(this.element);
 
-        var self = this;
-        for (var i = 0; i < canvas.tracks.length; i++) {
-            var track = canvas.tracks[i];
-            track.setMouseOverHandler(this.setCurrentTrack.bind(self));
-            track.setReservationMouseOverHandler(this.setCurrentReservation.bind(self));
-        }
-
-        canvas.element.onmousemove = function(event) {
-            if (!event)
-                event = window.event;
-
-            var leftOrigin = event.pageX;
-            if (self.canvasBoundingRect !== null && event.pageX + 140 > self.canvasBoundingRect.right)
-                 leftOrigin = event.pageX - 140;
-
-            if (self.currentTrack && self.currentReservation) {
-                self.element.style.left = leftOrigin + "px";
-                self.element.style.top = event.pageY + "px";
-                self.element.innerHTML =
-                    "<b>Person:</b> " + self.currentTrack.name + "<br/>" +
-                    "<b>Working on:</b> " + self.currentReservation.name;
-                self.element.style.display = "";
-            } else {
-                self.element.style.display = "none";
-            }
-
-            self.currentTrack = self.currentReservation = null;
-        };
-
-        canvas.element.onmouseleave = function(event) {
-            self.element.style.display = "none";
-        };
-
+        this.canvas = canvas;
         this.currentReservation = null;
         this.currentTrack = null;
         this.canvasBoundingRect = null;
@@ -678,8 +662,6 @@ var BlockPuzzle = {
                 trackLabel.setAttribute("x",
                                         this.options.TRACK_LEFT_LABEL_WIDTH - this.options.LABEL_GAP);
             }
-
-            this.hoverBox.setCanvasBoundingRect(this.element.getBoundingClientRect());
         };
 
         this.calculateStartAndEndDatesFromData = function(data) {
@@ -806,9 +788,29 @@ var BlockPuzzle = {
                 this.element.appendChild(this.createTrackLabel(this.tracks[j]));
             }
 
-            if (this.hoverBox !== null)
-                this.hoverBox.remove();
-            this.hoverBox = new BlockPuzzle.HoverBox(this);
+            this.createHoverBox();
+        };
+
+        this.createHoverBox = function() {
+            if (this.hoverBox === null)
+                this.hoverBox = new BlockPuzzle.HoverBox(this);
+
+            var hover = this.hoverBox;
+            for (var i = 0; i < this.tracks.length; i++) {
+                var track = this.tracks[i];
+                track.setMouseOverHandler(hover.setCurrentTrack.bind(hover));
+                track.setReservationMouseOverHandler(hover.setCurrentReservation.bind(hover));
+            }
+
+            this.element.onmousemove = function(event) {
+                if (!event)
+                    event = window.event;
+                hover.handleMouseMove(event);
+            };
+
+            this.element.onmouseleave = function(event) {
+                hover.hide();
+            };
         };
 
         var self = this;

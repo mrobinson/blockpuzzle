@@ -165,16 +165,13 @@ var BlockPuzzle = {
             container.appendChild(this.line.getElement());
         };
 
-        this.positionAndSizeElements = function(canvas, dayIndex) {
-            var x = canvas.getDateOffsetXCoordinate(dayIndex - 1);
-            this.line.setVisible(this.firstDayOfMonth || canvas.dayWidth > 2);
+        this.positionAndSizeElements = function(dateGrid) {
+            this.line.setPoints([this.origin[0], this.origin[1]],
+                                [this.origin[0], this.size[1]]);
+        };
 
-            // Extend month lines into the label region a bit.
-            var yOrigin = 0;
-            if (this.firstDayOfMonth)
-                yOrigin -= (this.options.TRACK_BORDER_WIDTH / 2) + 5;
-
-            this.line.setPoints([x, yOrigin], [x, canvas.height]);
+        this.setVisible = function(visible) {
+            this.line.setVisible(visible);
         };
 
         this.containsDate = function(date) {
@@ -189,7 +186,72 @@ var BlockPuzzle = {
 
         this.line = null;
         this.date = date;
+        this.origin = [0, 0];
+        this.size = [0, 0];
         this.firstDayOfMonth = date.getDate() == 1;
+    },
+
+    DateGrid: function(startDate, endDate, options) {
+        this.buildDOM = function(container) {
+            for (var i = 0; i < this.days.length; i++) {
+                this.days[i].buildDOM(container);
+            }
+        };
+
+        this.getOriginForDayIndex = function(dayIndex) {
+            // Extend month lines up into the label region a bit.
+            var monthOffset = -(this.options.TRACK_BORDER_WIDTH / 2) - this.options.LABEL_GAP + 1;
+            return [
+                this.origin[0] + (dayIndex * this.dayWidth),
+                this.origin[1] + this.days[dayIndex].firstDayOfMonth ? monthOffset : 0
+            ];
+        };
+
+        this.getOriginForDate = function(date) {
+            // Expensive way to calculate the date offset in our date range, that avoids
+            // tricky calculations involving daylight savings time.
+            for (var i = 0; i < this.days.length; i++) {
+                if (this.days[i].containsDate(date))
+                    return this.getOriginForDayIndex(i);
+            }
+            console.error("Could not get offset for date: " + date);
+            return [0, 0];
+        };
+
+        this.positionAndSizeElements = function() {
+            this.dayWidth = this.size[0] / this.days.length;
+            for (var i = 0; i < this.days.length; i++) {
+                var day = this.days[i];
+                day.size = [0, this.size[1]];
+                day.origin = this.getOriginForDayIndex(i);
+                day.setVisible(day.firstDayOfMonth || this.dayWidth > 2);
+                day.positionAndSizeElements(this);
+            }
+        };
+
+        this.forEachDay = function(callback) {
+            for (var i = 0; i < this.days.length; i++) {
+                callback(this.days[i]);
+            }
+        };
+
+        this.days = [];
+        this.elements = [];
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.origin = [0, 0];
+        this.size = [0, 0];
+
+        this.options = options;
+        if (this.options === undefined)
+            this.options = BlockPuzzle.Options.defaults();
+
+        var currentDate = new Date(this.startDate);
+        while (currentDate <= this.endDate) {
+            this.days.push(new BlockPuzzle.Day(currentDate, this.options));
+            currentDate = new Date(currentDate);
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
     },
 
     Reservation: function(name, start, end, hours, confirmed, options) {
@@ -199,7 +261,7 @@ var BlockPuzzle = {
             container.appendChild(this.path);
         };
 
-        this.positionAndSizeElements = function(canvas) {
+        this.positionAndSizeElements = function() {
             var pathString = "M " + this.topPoints[0].join(" ") + " ";
             for (var j = 1; j < this.topPoints.length; j++) {
                 pathString += "L " + this.topPoints[j].join(" ") + " ";
@@ -433,7 +495,7 @@ var BlockPuzzle = {
             this.buildSlices();
         };
 
-        this.positionAndSizeElements = function(canvas) {
+        this.positionAndSizeElements = function(dateGrid) {
             this.transform.setAttribute("transform",
                 "translate(" + this.origin[0] + "," + this.origin[1] + ")");
 
@@ -442,12 +504,12 @@ var BlockPuzzle = {
 
             for (var i = 0; i < this.slices.length; i++) {
                 var slice = this.slices[i];
-                var x = canvas.getDateXCoordinate(slice.start) - canvas.dayWidth;
-                var width = canvas.getDateXCoordinate(slice.end) - x;
+                var x = dateGrid.getOriginForDate(slice.start)[0];
+                var width = dateGrid.getOriginForDate(slice.end)[0] + dateGrid.dayWidth - x;
 
                 slice.origin = [x, this.origin[1]];
                 slice.size = [width, this.options.TRACK_HEIGHT];
-                slice.addPointsToReservations(canvas.dayWidth);
+                slice.addPointsToReservations(dateGrid.dayWidth);
             }
 
             for (var r = 0; r < this.reservations.length; r++) {
@@ -560,22 +622,6 @@ var BlockPuzzle = {
     },
 
     Canvas: function(elementName) {
-        this.getDateOffsetXCoordinate = function(offset) {
-            var halfTrackBorder = this.options.TRACK_BORDER_WIDTH / 2;
-            return halfTrackBorder + ((offset + 1) * this.dayWidth);
-        };
-
-        this.getDateXCoordinate = function(date) {
-            // Expensive way to calculate the date offset in our date range, that avoids
-            // tricky calculations involving daylight savings time.
-            for (var i = 0; i < this.dates.length; i++) {
-                if (this.dates[i].containsDate(date))
-                    return this.getDateOffsetXCoordinate(i);
-            }
-            console.error("Could not get offset for date: " + date);
-            return 0;
-        };
-
         this.positionAndSizeElements = function(object) {
             if (this.element === null)
                 return;
@@ -584,31 +630,35 @@ var BlockPuzzle = {
                 this.height == this.parentElement.clientHeight)
                 return;
 
-            var halfTrackBorder = this.options.TRACK_BORDER_WIDTH / 2;
+            var trackBorderWidth = this.options.TRACK_BORDER_WIDTH;
             var heightBetweenTracks =
-                this.options.TRACK_HEIGHT + this.options.TRACK_GAP + halfTrackBorder;
+                this.options.TRACK_HEIGHT + this.options.TRACK_GAP + trackBorderWidth;
             this.height = this.options.CANVAS_TOP_LABEL_HEIGHT +
                 (heightBetweenTracks * this.tracks.length) - this.options.TRACK_GAP;
             this.width = this.parentElement.clientWidth;
-            this.trackWidth = canvas.width - this.options.TRACK_LEFT_LABEL_WIDTH - halfTrackBorder;
-            this.dayWidth = (this.trackWidth - halfTrackBorder) / this.dates.length;
+            var labelOffset = [
+                this.options.TRACK_LEFT_LABEL_WIDTH,
+                this.options.CANVAS_TOP_LABEL_HEIGHT
+            ];
 
             this.element.style.width = this.width;
             this.element.style.height = this.height;
             this.element.setAttribute("viewBox", "0 0 " + this.width + " " + this.height);
             this.chartBodyTransform.setAttribute("transform",
-                "translate(" + this.options.TRACK_LEFT_LABEL_WIDTH + ", " +
-                               this.options.CANVAS_TOP_LABEL_HEIGHT + ")");
+                "translate(" + labelOffset[0] + ", " + labelOffset[1] + ")");
 
-            for (var i = 0; i < this.dates.length; i++) {
-                this.dates[i].positionAndSizeElements(canvas, i);
-            }
+            var halfTrackBorderWidth = trackBorderWidth / 2;
+            var widthForTracks = this.width - this.options.TRACK_LEFT_LABEL_WIDTH - halfTrackBorderWidth;
+            this.dateGrid.size = [widthForTracks - halfTrackBorderWidth, this.height];
+            this.dateGrid.origin = [trackBorderWidth / 2, 0];
+            this.dateGrid.positionAndSizeElements();
 
             for (var j = 0; j < this.monthLabels.length; j++) {
                 var label = this.monthLabels[j];
-                var origin =
-                    [this.options.TRACK_LEFT_LABEL_WIDTH + canvas.getDateXCoordinate(label.date),
-                     this.options.CANVAS_TOP_LABEL_HEIGHT - this.options.LABEL_GAP];
+                var origin = [
+                    labelOffset[0] + this.dateGrid.getOriginForDate(label.date)[0],
+                    labelOffset[1] - this.options.LABEL_GAP
+                ];
 
                 label.setAttribute("x", origin[0]);
                 label.setAttribute("y", origin[1]);
@@ -619,8 +669,8 @@ var BlockPuzzle = {
                 var trackYOrigin = heightBetweenTracks * k;
                 var track = this.tracks[k];
                 track.origin = [0, trackYOrigin];
-                track.size = [this.trackWidth, this.options.TRACK_HEIGHT];
-                track.positionAndSizeElements(canvas);
+                track.size = [widthForTracks, this.options.TRACK_HEIGHT];
+                track.positionAndSizeElements(this.dateGrid);
 
                 var trackLabel = this.trackLabels[k];
                 trackLabel.setAttribute("y", this.options.CANVAS_TOP_LABEL_HEIGHT +
@@ -630,16 +680,6 @@ var BlockPuzzle = {
             }
 
             this.hoverBox.setCanvasBoundingRect(this.element.getBoundingClientRect());
-        };
-
-        this.fillDatesArray = function() {
-            this.dates = [];
-            var currentDate = new Date(this.startDate);
-            while (currentDate <= this.endDate) {
-                this.dates.push(new BlockPuzzle.Day(currentDate, this.options));
-                currentDate = new Date(currentDate);
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
         };
 
         this.calculateStartAndEndDatesFromData = function(data) {
@@ -667,7 +707,7 @@ var BlockPuzzle = {
                 return;
             }
 
-            this.fillDatesArray();
+            this.dateGrid = new BlockPuzzle.DateGrid(this.startDate, this.endDate, this.options);
         };
 
         this.setOptions = function(options ) {
@@ -681,8 +721,6 @@ var BlockPuzzle = {
 
         this.rebuild = function() {
             this.tracks = [];
-            this.dates = [];
-
             this.calculateStartAndEndDatesFromData(this.data);
 
             var tracks = this.data.tracks;
@@ -756,12 +794,12 @@ var BlockPuzzle = {
                 "translate(" + this.options.TRACK_LEFT_LABEL_WIDTH + ", 0)");
             this.element.appendChild(this.chartBodyTransform);
 
-            for (var i = 0; i < this.dates.length; i++) {
-                this.dates[i].buildDOM(this.chartBodyTransform);
-                var date = this.dates[i].date;
-                if (date.getDate() == 1)
-                    this.element.appendChild(this.createMonthLabel(date));
-            }
+            this.dateGrid.buildDOM(this.chartBodyTransform);
+
+            this.dateGrid.forEachDay(function(day) {
+                if (day.firstDayOfMonth)
+                    this.element.appendChild(this.createMonthLabel(day.date));
+            }.bind(this));
 
             for (var j = 0; j < this.tracks.length; j++) {
                 this.tracks[j].buildDOM(this.chartBodyTransform);
@@ -776,7 +814,6 @@ var BlockPuzzle = {
         var self = this;
         this.options = BlockPuzzle.Options.defaults();
         this.tracks = [];
-        this.dates = [];
         this.trackLabels = [];
         this.chartBodyTransform = null;
         this.hoverBox = null;

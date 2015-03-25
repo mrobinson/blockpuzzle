@@ -358,7 +358,7 @@ var BlockPuzzle = {
         };
 
         this.setMouseOverHandler = function(handler) {
-            this.path.onmousemove = handler.bind(this, this);
+            this.path.addEventListener("mousemove", handler.bind(this, this));
         };
 
         this.options = options;
@@ -562,8 +562,8 @@ var BlockPuzzle = {
         };
 
         this.setMouseOverHandler = function(handler) {
-            this.transform.onmousemove = handler.bind(this, this);
-            this.rect.onmousemove = handler.bind(this, this);
+            this.transform.addEventListener("mousemove", handler.bind(this, this));
+            this.rect.getElement().addEventListener("mousemove", handler.bind(this, this));
         };
 
         this.setReservationMouseOverHandler = function(handler) {
@@ -655,7 +655,6 @@ var BlockPuzzle = {
         this.currentReservation = null;
         this.currentTrack = null;
         this.currentDay = null;
-        this.canvasBoundingRect = null;
     },
 
     Canvas: function(elementName) {
@@ -849,23 +848,23 @@ var BlockPuzzle = {
                 track.setReservationMouseOverHandler(hover.setCurrentReservation.bind(hover));
             }
 
-            this.element.onmousemove = function(event) {
+            this.element.addEventListener("mousemove", function(event) {
                 if (!event)
                     event = window.event;
 
-                var canvasRect = canvas.element.getBoundingClientRect();
-                canvas.dateGrid.handleMouseMove(
-                    event.pageX - canvas.options.TRACK_LEFT_LABEL_WIDTH - canvasRect.left,
-                    event.pageY - canvas.options.CANVAS_TOP_LABEL_HEIGHT - canvasRect.top);
-                hover.setCurrentDay(canvas.dateGrid.hoveredDay);
+                var canvasRect = this.element.getBoundingClientRect();
+                this.dateGrid.handleMouseMove(
+                    event.pageX - this.options.TRACK_LEFT_LABEL_WIDTH - canvasRect.left,
+                    event.pageY - this.options.CANVAS_TOP_LABEL_HEIGHT - canvasRect.top);
+                hover.setCurrentDay(this.dateGrid.hoveredDay);
 
                 hover.handleMouseMove(event);
-            };
+            }.bind(this));
 
-            this.element.onmouseleave = function(event) {
+            this.element.addEventListener("mouseleave", function(event) {
                 hover.hide();
-                canvas.dateGrid.handleMouseLeave();
-            };
+                this.dateGrid.handleMouseLeave();
+            }.bind(this));
         };
 
         var self = this;
@@ -884,10 +883,9 @@ var BlockPuzzle = {
             this.element = null;
         }
 
-        var this_ = this;
-        window.onresize = function() {
-            this_.positionAndSizeElements();
-        };
+        window.addEventListener("resize", function() {
+            this.positionAndSizeElements();
+        }.bind(this));
     },
 
     getDateForQuarter: function(quarterNumber, quarterYear, lastDay) {

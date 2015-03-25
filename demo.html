@@ -17,12 +17,12 @@
     </textarea>
     <input type="submit" onclick="updateGraph();"/>
     <script>
-    var canvas = new BlockPuzzle.Canvas("canvas");
+    var blandcanvas = new BlockPuzzle.Canvas("canvas");
     function updateGraph() {
         var text = document.getElementById("projects").value;
         var data = BlockPuzzle.convertTextToData(text);
-        canvas.setOptions(data);
-        canvas.setData(data);
+        blandcanvas.setOptions(data);
+        blandcanvas.setData(data);
     }
     updateGraph();
     </script>

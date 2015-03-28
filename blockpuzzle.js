@@ -620,14 +620,18 @@ var BlockPuzzle = {
 
             this.element.style.left = leftOrigin + "px";
             this.element.style.top = event.pageY + "px";
-            var content = "<b>" + day.getDateString() + "<br/>";
+
+            this.dateHeader.innerText = day.getDateString();
             if (track !== null && reservation !== null) {
-                content += "<b>Person:</b> " + track.name + "<br/>" +
-                           "<b>Working on:</b> " + reservation.name + "<br/>" +
-                           "<b>Hours:</b> " + slice.getHoursAllocatedForReservation(reservation).toFixed(2);
+                this.trackName.innerText = track.name;
+                this.projectName.innerText = reservation.name;
+                this.projectHours.innerText =
+                    slice.getHoursAllocatedForReservation(reservation).toFixed(2) + " per week";
+                this.reservationDetails.style.display = "";
+            } else {
+                this.reservationDetails.style.display = "none";
             }
 
-            this.element.innerHTML = content;
             this.element.style.display = "";
         };
 
@@ -638,17 +642,42 @@ var BlockPuzzle = {
         this.element = document.createElement("div");
         this.element.style.fontFamily = "sans-serif";
         this.element.style.fontSize = "12px";
-        this.element.style.width = "100px";
         this.element.style.background = "white";
         this.element.style.display = "none";
-        this.element.style.padding = "10px";
         this.element.style.margin = "10px";
-        this.element.style.border = "1px solid black";
+        this.element.style.border = "1px solid rgba(0, 0, 0, 0.4)";
         this.element.style.position = "absolute";
-        this.element.style.boxShadow = "rgba(0, 0, 0, 0.5) 2px 2px 3px";
+        this.element.style.boxShadow = "rgba(0, 0, 0, 0.3) 2px 2px 3px";
 
         // TODO: Set this based on the z index of the canvas.
         this.element.style.zIndex = "100";
+
+        this.dateHeader = document.createElement("div");
+        this.dateHeader.style.boxSizing = "border-box";
+        this.dateHeader.style.padding = "5px";
+        this.dateHeader.style.fontWeight = "bold";
+        this.dateHeader.style.fontSize = "15px";
+        this.dateHeader.style.background = "rgb(255, 255, 204)";
+        this.dateHeader.style.width = "100%";
+        this.element.appendChild(this.dateHeader);
+
+        this.reservationDetails = document.createElement("div");
+        this.reservationDetails.style.padding = "5px";
+        this.reservationDetails.style.textAlign = "center";
+        this.element.appendChild(this.reservationDetails);
+
+        this.trackName = document.createElement("span");
+        this.trackName.style.fontSize = "15px";
+
+        this.projectName = document.createElement("span");
+        this.projectName.style.fontSize = "15px";
+
+        this.projectHours = document.createElement("span");
+        this.reservationDetails.appendChild(this.trackName);
+        this.reservationDetails.appendChild(document.createElement("br"));
+        this.reservationDetails.appendChild(this.projectName);
+        this.reservationDetails.appendChild(document.createElement("br"));
+        this.reservationDetails.appendChild(this.projectHours);
 
         document.body.appendChild(this.element);
 

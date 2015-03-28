@@ -750,13 +750,14 @@ var BlockPuzzle = {
                 for (var j = 0; j < tracks[i].reservations.length; j++) {
                     var reservation = tracks[i].reservations[j];
                     if (this.startDate === null || this.startDate > reservation.start) {
-                        this.startDate =
-                            new Date(reservation.start.getFullYear(), 0, 1, 0, 0, 0, 0);
+                        this.startDate = new Date(reservation.start);
+                        this.startDate.setDate(1);
                     }
 
                     if (this.endDate === null || this.endDate < reservation.end) {
-                        this.endDate =
-                            new Date(reservation.end.getFullYear(), 11, 31, 0, 0, 0, 0);
+                        this.endDate = new Date(reservation.end);
+                        this.endDate.setMonth(this.endDate.getMonth() + 1);
+                        this.endDate.setDate(0);
                     }
                 }
             }

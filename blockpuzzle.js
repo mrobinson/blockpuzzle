@@ -451,6 +451,14 @@ var BlockPuzzle = {
             }
         };
 
+        this.getHoursAllocatedForReservation = function(reservation) {
+            for (var i = 0; i < this.reservations.length; i++) {
+                if (this.reservations[i] === reservation)
+                    return this.reservationHours[i];
+            }
+            return 0;
+        };
+
         this.containsReservation = function(reservation) {
             return reservation.end >= this.start && reservation.start < this.end;
         };
@@ -513,6 +521,15 @@ var BlockPuzzle = {
 
             for (var j = 0; j < this.slices.length; j++)
                 this.slices[j].calculateHoursForReservations();
+        };
+
+        this.getSliceAtDay = function(day) {
+            for (var i = 0; i < this.slices.length; i++) {
+                var slice = this.slices[i];
+                if (slice.start <= day.date && slice.end >= day.date)
+                    return slice;
+            }
+            return null;
         };
 
         this.buildDOM = function(container) {
@@ -590,20 +607,8 @@ var BlockPuzzle = {
     },
 
     HoverBox: function(canvas) {
-        this.setCurrentTrack = function(track) {
-            this.currentTrack = track;
-        };
-
-        this.setCurrentReservation = function(reservation) {
-            this.currentReservation = reservation;
-        };
-
-        this.setCurrentDay = function(day) {
-            this.currentDay = day;
-        };
-
-        this.handleMouseMove = function(event) {
-            if (!this.currentDay) {
+        this.handleMouseMove = function(event, reservation, slice, track, day) {
+            if (!day) {
                 this.element.style.display = "none";
                 return;
             }
@@ -615,19 +620,15 @@ var BlockPuzzle = {
 
             this.element.style.left = leftOrigin + "px";
             this.element.style.top = event.pageY + "px";
-            var content = "<b>" + this.currentDay.getDateString() + "<br/>";
-            if (this.currentTrack !== null && this.currentReservation !== null) {
-                content += "<b>Person:</b> " + this.currentTrack.name + "<br/>" +
-                           "<b>Working on:</b> " + this.currentReservation.name;
+            var content = "<b>" + day.getDateString() + "<br/>";
+            if (track !== null && reservation !== null) {
+                content += "<b>Person:</b> " + track.name + "<br/>" +
+                           "<b>Working on:</b> " + reservation.name + "<br/>" +
+                           "<b>Hours:</b> " + slice.getHoursAllocatedForReservation(reservation).toFixed(2);
             }
 
             this.element.innerHTML = content;
             this.element.style.display = "";
-
-            // Reset these so that we can detect if we are over a reservation at the
-            // next mouse move event.
-            this.currentTrack = null;
-            this.currentReservation = null;
         };
 
         this.hide = function() {
@@ -652,9 +653,6 @@ var BlockPuzzle = {
         document.body.appendChild(this.element);
 
         this.canvas = canvas;
-        this.currentReservation = null;
-        this.currentTrack = null;
-        this.currentDay = null;
     },
 
     Canvas: function(elementName) {
@@ -839,11 +837,18 @@ var BlockPuzzle = {
             if (this.hoverBox === null)
                 this.hoverBox = new BlockPuzzle.HoverBox(this);
 
-            var hover = this.hoverBox;
+            var setHoveredTrack = function(track) {
+                this.hoveredTrack = track;
+            }.bind(this);
+
+            var setHoveredReservation = function(reservation) {
+                this.hoveredReservation = reservation;
+            }.bind(this);
+
             for (var i = 0; i < this.tracks.length; i++) {
                 var track = this.tracks[i];
-                track.setMouseOverHandler(hover.setCurrentTrack.bind(hover));
-                track.setReservationMouseOverHandler(hover.setCurrentReservation.bind(hover));
+                track.setMouseOverHandler(setHoveredTrack);
+                track.setReservationMouseOverHandler(setHoveredReservation);
             }
 
             this.element.addEventListener("mousemove", function(event) {
@@ -854,13 +859,24 @@ var BlockPuzzle = {
                 this.dateGrid.handleMouseMove(
                     event.pageX - this.options.TRACK_LEFT_LABEL_WIDTH - canvasRect.left,
                     event.pageY - this.options.CANVAS_TOP_LABEL_HEIGHT - canvasRect.top);
-                hover.setCurrentDay(this.dateGrid.hoveredDay);
+                this.hoveredDay = this.dateGrid.hoveredDay;
+                var slice = this.hoveredDay !== null && this.hoveredTrack !== null ?
+                    this.hoveredTrack.getSliceAtDay(this.hoveredDay) : null;
+                this.hoverBox.handleMouseMove(event,
+                                              this.hoveredReservation,
+                                              slice,
+                                              this.hoveredTrack,
+                                              this.hoveredDay);
 
-                hover.handleMouseMove(event);
+                // Reset these so that we can detect when we go off
+                // the edge of a reservation path.
+                this.hoveredTrack = null;
+                this.hoveredReservation = null;
+                this.hoveredDay = null;
             }.bind(this));
 
             this.element.addEventListener("mouseleave", function(event) {
-                hover.hide();
+                this.hoverBox.hide();
                 this.dateGrid.handleMouseLeave();
             }.bind(this));
         };
@@ -871,6 +887,10 @@ var BlockPuzzle = {
         this.trackLabels = [];
         this.chartBodyTransform = null;
         this.hoverBox = null;
+
+        this.hoveredReservation = null;
+        this.hoveredTrack = null;
+        this.hoveredDay = null;
 
         // Allow a null element for testing purposes.
         if (elementName !== null) {

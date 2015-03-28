@@ -227,33 +227,35 @@ QUnit.test("Slice.calculateHoursForReservations", function(assert) {
     var slice = new BlockPuzzle.Slice(start, end);
 
     var reservation1 = new BlockPuzzle.Reservation("Project1", start, end, null);
-    slice.reservations.push(reservation1);
-    slice.reservations.push(reservation1);
+    var reservation2 = new BlockPuzzle.Reservation("Project2", start, end, null);
+    slice.reservations = [ reservation1, reservation2 ];
     slice.calculateHoursForReservations();
-    assert.equal(slice.reservationHours[0], 17.5, "Two reservations with undefined hours");
-    assert.equal(slice.reservationHours[1], 17.5, "Two reservations with undefined hours");
+    assert.equal(slice.getHoursAllocatedForReservation(reservation1),
+                 17.5, "Two reservations with undefined hours");
+    assert.equal(slice.getHoursAllocatedForReservation(reservation2),
+                 17.5, "Two reservations with undefined hours");
     assert.equal(slice.unusedHours, 5, "Two reservations with undefined hours");
     assert.equal(slice.totalHoursReserved(), 40, "Two reservations with undefined hours");
 
-    var reservation2 = new BlockPuzzle.Reservation("Project1", start, end, 10);
-    slice.reservations = [];
-    slice.reservations.push(reservation1);
-    slice.reservations.push(reservation1);
-    slice.reservations.push(reservation2);
+    var reservation3 = new BlockPuzzle.Reservation("Project1", start, end, 10);
+    slice.reservations = [ reservation1, reservation2, reservation3 ];
     slice.calculateHoursForReservations();
-    assert.equal(slice.reservationHours[0], 12.5, "One reservation with defined hours");
-    assert.equal(slice.reservationHours[1], 12.5, "One reservation with defined hours");
-    assert.equal(slice.reservationHours[2], 10, "One reservation with defined hours");
+    assert.equal(slice.getHoursAllocatedForReservation(reservation1),
+                 12.5, "One reservation with defined hours");
+    assert.equal(slice.getHoursAllocatedForReservation(reservation2),
+                 12.5, "One reservation with defined hours");
+    assert.equal(slice.getHoursAllocatedForReservation(reservation3),
+                 10, "One reservation with defined hours");
     assert.equal(slice.unusedHours, 5, "One reservation with defined hours");
     assert.equal(slice.totalHoursReserved(), 40, "One reservation with defined hours");
 
-    var reservation3 = new BlockPuzzle.Reservation("Project1", start, end, 55);
-    slice.reservations = [];
-    slice.reservations.push(reservation1);
-    slice.reservations.push(reservation3);
+    var reservation4 = new BlockPuzzle.Reservation("Project1", start, end, 55);
+    slice.reservations = [ reservation1, reservation4 ];
     slice.calculateHoursForReservations();
-    assert.equal(slice.reservationHours[0], 0, "A reservation that takes all available hours");
-    assert.equal(slice.reservationHours[1], 55, "A reservation that takes all available hours");
+    assert.equal(slice.getHoursAllocatedForReservation(reservation1),
+                 0, "A reservation that takes all available hours");
+    assert.equal(slice.getHoursAllocatedForReservation(reservation4),
+                 55, "A reservation that takes all available hours");
     assert.equal(slice.unusedHours, 0, "A reservation that takes all available hours");
     assert.equal(slice.totalHoursReserved(), 55, "A reservation that takes all available hours");
 });

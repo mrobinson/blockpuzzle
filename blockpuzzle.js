@@ -886,9 +886,10 @@ var BlockPuzzle = {
                     event = window.event;
 
                 var canvasRect = this.element.getBoundingClientRect();
+
                 this.dateGrid.handleMouseMove(
-                    event.pageX - this.options.TRACK_LEFT_LABEL_WIDTH - canvasRect.left,
-                    event.pageY - this.options.CANVAS_TOP_LABEL_HEIGHT - canvasRect.top);
+                    event.clientX - this.options.TRACK_LEFT_LABEL_WIDTH - canvasRect.left,
+                    event.clientY - this.options.CANVAS_TOP_LABEL_HEIGHT - canvasRect.top);
                 this.hoveredDay = this.dateGrid.hoveredDay;
                 var slice = this.hoveredDay !== null && this.hoveredTrack !== null ?
                     this.hoveredTrack.getSliceAtDay(this.hoveredDay) : null;

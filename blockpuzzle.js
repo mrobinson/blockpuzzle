@@ -623,10 +623,9 @@ var BlockPuzzle = {
 
             this.dateHeader.innerText = day.getDateString();
             if (track !== null && reservation !== null) {
-                this.trackName.innerText = track.name;
-                this.projectName.innerText = reservation.name;
-                this.projectHours.innerText =
-                    slice.getHoursAllocatedForReservation(reservation).toFixed(2) + " per week";
+                this.reservationName.innerText = reservation.name;
+                this.reservationHours.innerText =
+                    slice.getHoursAllocatedForReservation(reservation).toFixed(2) + " hours / week";
                 this.reservationDetails.style.display = "";
             } else {
                 this.reservationDetails.style.display = "none";
@@ -641,7 +640,9 @@ var BlockPuzzle = {
 
         this.element = document.createElement("div");
         this.element.style.fontFamily = "sans-serif";
-        this.element.style.fontSize = "12px";
+        this.element.style.fontSize = "15px";
+        this.element.style.fontWeight = "bold";
+        this.element.style.textAlign = "center";
         this.element.style.background = "white";
         this.element.style.display = "none";
         this.element.style.margin = "10px";
@@ -649,35 +650,28 @@ var BlockPuzzle = {
         this.element.style.position = "absolute";
         this.element.style.boxShadow = "rgba(0, 0, 0, 0.3) 2px 2px 3px";
 
-        // TODO: Set this based on the z index of the canvas.
+        // TODO: Set this based on the z-index of the canvas.
         this.element.style.zIndex = "100";
 
         this.dateHeader = document.createElement("div");
         this.dateHeader.style.boxSizing = "border-box";
         this.dateHeader.style.padding = "5px";
-        this.dateHeader.style.fontWeight = "bold";
-        this.dateHeader.style.fontSize = "15px";
         this.dateHeader.style.background = "rgb(255, 255, 204)";
         this.dateHeader.style.width = "100%";
         this.element.appendChild(this.dateHeader);
 
         this.reservationDetails = document.createElement("div");
         this.reservationDetails.style.padding = "5px";
-        this.reservationDetails.style.textAlign = "center";
+        this.reservationDetails.style.paddingTop = "10px";
         this.element.appendChild(this.reservationDetails);
 
-        this.trackName = document.createElement("span");
-        this.trackName.style.fontSize = "15px";
+        this.reservationName = document.createElement("span");
+        this.reservationHours = document.createElement("span");
+        this.reservationHours.style.fontWeight = "normal";
 
-        this.projectName = document.createElement("span");
-        this.projectName.style.fontSize = "15px";
-
-        this.projectHours = document.createElement("span");
-        this.reservationDetails.appendChild(this.trackName);
+        this.reservationDetails.appendChild(this.reservationName);
         this.reservationDetails.appendChild(document.createElement("br"));
-        this.reservationDetails.appendChild(this.projectName);
-        this.reservationDetails.appendChild(document.createElement("br"));
-        this.reservationDetails.appendChild(this.projectHours);
+        this.reservationDetails.appendChild(this.reservationHours);
 
         document.body.appendChild(this.element);
 

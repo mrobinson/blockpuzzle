@@ -991,8 +991,8 @@ var BlockPuzzle = {
                 var dateAndHoursStrings = reservationMatch[3].split(",");
                 var dateRangeString = dateAndHoursStrings[0].trim();
                 var dates = BlockPuzzle.dateRangeToDates(dateRangeString);
-                if (dates === null) {
-                    console.error("Couldn't parse date range string '" + dateRangeString + "'");
+                if (dates === null || dates[0] === null || dates[1] === null) {
+                    console.error("Couldn't parse date range string in reservation'" + reservationMatch[0] + "'");
                     continue;
                 }
 

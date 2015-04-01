@@ -439,7 +439,7 @@ var BlockPuzzle = {
                 this.unusedHours = this.options.FREE_TIME_HOURS;
             }
             if (numReservationsWithoutHours === 0) {
-                this.unusedHours += hoursLeft;
+                this.unusedHours += Math.max(hoursLeft, 0);
                 return;
             }
 

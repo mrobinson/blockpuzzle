@@ -258,6 +258,16 @@ QUnit.test("Slice.calculateHoursForReservations", function(assert) {
                  55, "A reservation that takes all available hours");
     assert.equal(slice.unusedHours, 0, "A reservation that takes all available hours");
     assert.equal(slice.totalHoursReserved(), 55, "A reservation that takes all available hours");
+
+    var reservation5 = new BlockPuzzle.Reservation("Project1", start, end, 55);
+    slice.reservations = [ reservation4, reservation5 ];
+    slice.calculateHoursForReservations();
+    assert.equal(slice.getHoursAllocatedForReservation(reservation1),
+                 0, "Two reservations that exceed the total hours");
+    assert.equal(slice.getHoursAllocatedForReservation(reservation4),
+                 55, "Two reservations that exceed the total hours");
+    assert.equal(slice.unusedHours, 0, "Two reservations that exceed the total hours");
+    assert.equal(slice.totalHoursReserved(), 110, "Two reservations that exceed the total hours");
 });
 
 QUnit.test("Track.buildSlices", function(assert) {

@@ -683,8 +683,8 @@ var BlockPuzzle = {
             if (this.element === null)
                 return;
 
-            if (this.element.clientWidth == this.parentElement.clientWidth &&
-                this.element.clientHeight == this.parentElement.clientHeight)
+            if (this.size[0] == this.parentElement.clientWidth &&
+                this.size[1] == this.parentElement.clientHeight)
                 return;
 
             var trackBorderWidth = this.options.TRACK_BORDER_WIDTH;
@@ -692,18 +692,20 @@ var BlockPuzzle = {
                 this.options.TRACK_HEIGHT + this.options.TRACK_GAP + trackBorderWidth;
             var heightForTracks = (heightBetweenTracks * this.tracks.length) - this.options.TRACK_GAP;
 
-            var width = this.parentElement.clientWidth;
-            var height = heightForTracks + this.options.CANVAS_TOP_LABEL_HEIGHT;
-            this.element.style.width = width;
-            this.element.style.height = height;
-            this.element.setAttribute("viewBox", "0 0 " + width + " " + height);
+            this.size = [
+                this.parentElement.clientWidth,
+                heightForTracks + this.options.CANVAS_TOP_LABEL_HEIGHT
+            ];
+            this.element.style.width = this.size[0];
+            this.element.style.height = this.size[1];
+            this.element.setAttribute("viewBox", "0 0 " + this.size[0] + " " + this.size[1]);
 
-            var labelOffset = [ this.options.TRACK_LEFT_LABEL_WIDTH, this.options.CANVAS_TOP_LABEL_HEIGHT ];
+            var labelOffset = [this.options.TRACK_LEFT_LABEL_WIDTH, this.options.CANVAS_TOP_LABEL_HEIGHT];
             this.chartBodyTransform.setAttribute("transform",
                 "translate(" + labelOffset[0] + ", " + labelOffset[1] + ")");
 
             var halfTrackBorderWidth = trackBorderWidth / 2;
-            var widthForTracks = width - this.options.TRACK_LEFT_LABEL_WIDTH - halfTrackBorderWidth;
+            var widthForTracks = this.size[0] - this.options.TRACK_LEFT_LABEL_WIDTH - halfTrackBorderWidth;
             this.dateGrid.size = [widthForTracks - halfTrackBorderWidth, heightForTracks - halfTrackBorderWidth];
             this.dateGrid.origin = [trackBorderWidth / 2, 0];
             this.dateGrid.positionAndSizeElements();
@@ -908,6 +910,7 @@ var BlockPuzzle = {
 
         var self = this;
         this.options = BlockPuzzle.Options.defaults();
+        this.size = [0, 0];
         this.tracks = [];
         this.trackLabels = [];
         this.chartBodyTransform = null;

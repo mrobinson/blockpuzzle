@@ -1015,24 +1015,24 @@ var BlockPuzzle = {
         if (!match)
             return null;
 
-        return Number.parseFloat(match[1]);
+        return parseFloat(match[1]);
     },
 
     dateStringToDate: function(dateString) {
         var fullDateRegex = /^(\d\d?)\/(\d\d?)\/(\d\d\d\d)/;
         var match = fullDateRegex.exec(dateString);
         if (match) {
-            return new Date(Number.parseInt(match[3]),
-                            Number.parseInt(match[2]) - 1, // Month is zero-indexed.
-                            Number.parseInt(match[1]),
+            return new Date(parseInt(match[3]),
+                            parseInt(match[2]) - 1, // Month is zero-indexed.
+                            parseInt(match[1]),
                             0, 0, 0, 0);
         }
 
         var quarterRegex = /^Q([1,2,3,4])\/(\d\d\d\d)/;
         match = quarterRegex.exec(dateString);
         if (match) {
-            return BlockPuzzle.getDateForQuarter(Number.parseInt(match[1]),
-                                                 Number.parseInt(match[2]),
+            return BlockPuzzle.getDateForQuarter(parseInt(match[1]),
+                                                 parseInt(match[2]),
                                                  false);
         }
 
@@ -1043,10 +1043,10 @@ var BlockPuzzle = {
         var quarterRangeRegex = /Q([1,2,3,4])\/(\d\d\d\d)\s*-\s*Q([1,2,3,4])\/(\d\d\d\d)/;
         var match = quarterRangeRegex.exec(dateString);
         if (match) {
-            var quarter1 = Number.parseInt(match[1]);
-            var year1 = Number.parseInt(match[2]);
-            var quarter2 = Number.parseInt(match[3]);
-            var year2 = Number.parseInt(match[4]);
+            var quarter1 = parseInt(match[1]);
+            var year1 = parseInt(match[2]);
+            var quarter2 = parseInt(match[3]);
+            var year2 = parseInt(match[4]);
             var start = BlockPuzzle.getDateForQuarter(quarter1, year1, false);
             var end = BlockPuzzle.getDateForQuarter(quarter2, year2, true);
             if (start > end) { // Reverse range.
@@ -1072,8 +1072,8 @@ var BlockPuzzle = {
         var quarterRegex = /Q([1,2,3,4])\/(\d\d\d\d)/;
         match = quarterRegex.exec(dateString);
         if (match) {
-            var quarter = Number.parseInt(match[1]);
-            var year = Number.parseInt(match[2]);
+            var quarter = parseInt(match[1]);
+            var year = parseInt(match[2]);
             return [BlockPuzzle.getDateForQuarter(quarter, year, false),
                     BlockPuzzle.getDateForQuarter(quarter, year, true)];
         }

@@ -1031,6 +1031,14 @@ var BlockPuzzle = {
                             0, 0, 0, 0);
         }
 
+        var monthDateRegex = /^(\d\d?)\/(\d\d\d\d)/;
+        var match = monthDateRegex.exec(dateString);
+        if (match) {
+            return new Date(parseInt(match[2]),
+                            parseInt(match[1]) - 1, // Month is zero-indexed.
+                            1, 0, 0, 0, 0);
+        }
+
         var quarterRegex = /^Q([1,2,3,4])\/(\d\d\d\d)/;
         match = quarterRegex.exec(dateString);
         if (match) {

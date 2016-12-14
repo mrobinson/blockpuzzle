@@ -154,17 +154,20 @@ QUnit.test("dateStringToDate", function(assert) {
     assert.equal(BlockPuzzle.dateStringToDate("Q1/2012").getTime(),
                  (new Date(2012, 0, 1, 0, 0, 0, 0)).getTime(),
                  "Simple quarter.");
+    assert.equal(BlockPuzzle.dateStringToDate("12/2012").getTime(),
+                 (new Date(2012, 11, 1, 0, 0, 0, 0)).getTime(),
+                 "Simple month date.");
     assert.equal(BlockPuzzle.dateStringToDate("alkja;ds lajsd;f alsf"), null,
                  "Random text should not return a date");
 });
 
 QUnit.test("dateRangeToDates", function(assert) {
     function assertValidDateRange(datePair, start, end, message) {
-        assert.notEqual(datePair, null, message);
-        assert.equal(datePair.length, 2, message);
-        assert.ok(datePair[0] <= datePair[1], message);
-        assert.equal(datePair[0].getTime(), start.getTime(), message);
-        assert.equal(datePair[1].getTime(), end.getTime(), message);
+        assert.notEqual(datePair, null, message + " (not null)");
+        assert.equal(datePair.length, 2, message + " (length 2)");
+        assert.ok(datePair[0] <= datePair[1], message + " (earliest first)");
+        assert.equal(datePair[0].getTime(), start.getTime(), message + "(first equal)");
+        assert.equal(datePair[1].getTime(), end.getTime(), message + "(second equal)");
     }
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("01/01/2001-02/03/2012"),
@@ -185,6 +188,16 @@ QUnit.test("dateRangeToDates", function(assert) {
                          new Date(2001, 0, 1, 0, 0, 0, 0),
                          new Date(2001, 2, 31, 0, 0, 0, 0),
                          "Quarter range.");
+
+    assertValidDateRange(BlockPuzzle.dateRangeToDates("02/2001-05/2001"),
+                         new Date(2001, 1, 1, 0, 0, 0, 0),
+                         new Date(2001, 4, 1, 0, 0, 0, 0),
+                         "Month range.");
+
+    assertValidDateRange(BlockPuzzle.dateRangeToDates("02/2001-05/05/2001"),
+                         new Date(2001, 1, 1, 0, 0, 0, 0),
+                         new Date(2001, 4, 5, 0, 0, 0, 0),
+                         "Month range with date on one end.");
 
     assert.strictEqual(BlockPuzzle.dateRangeToDates("Q1"), null, "Invalid quarter string");
 });

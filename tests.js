@@ -146,24 +146,25 @@ QUnit.test("convertTextToData reservations", function(assert) {
 });
 
 QUnit.test("dateStringToDate", function(assert) {
-    assert.equal(BlockPuzzle.dateStringToDate("01/01/2001").getTime(),
+    assert.equal(BlockPuzzle.dateStringToDate("01/01/2001")[0].getTime(),
                  (new Date(2001, 0, 1, 0, 0, 0, 0)).getTime(),
                  "Simple date.");
     assert.equal(BlockPuzzle.dateStringToDate("01/01/01"), null,
                  "Two digit years not supported.");
-    assert.equal(BlockPuzzle.dateStringToDate("Q1/2012").getTime(),
+    assert.equal(BlockPuzzle.dateStringToDate("Q1/2012")[0].getTime(),
                  (new Date(2012, 0, 1, 0, 0, 0, 0)).getTime(),
                  "Simple quarter.");
-    assert.equal(BlockPuzzle.dateStringToDate("12/2012").getTime(),
+    assert.equal(BlockPuzzle.dateStringToDate("12/2012")[0].getTime(),
                  (new Date(2012, 11, 1, 0, 0, 0, 0)).getTime(),
                  "Simple month date.");
-    assert.equal(BlockPuzzle.dateStringToDate("alkja;ds lajsd;f alsf"), null,
-                 "Random text should not return a date");
+    assert.equal(BlockPuzzle.dateStringToDate("alkja;ds lajsd;f alsf"),
+                 null, "Random text should not return a date");
 });
 
 QUnit.test("dateRangeToDates", function(assert) {
     function assertValidDateRange(datePair, start, end, message) {
-        assert.notEqual(datePair, null, message + " (not null)");
+        assert.notEqual(datePair[0], null, message + " (first not null)");
+        assert.notEqual(datePair[1], null, message + " (second not null)");
         assert.equal(datePair.length, 2, message + " (length 2)");
         assert.ok(datePair[0] <= datePair[1], message + " (earliest first)");
         assert.equal(datePair[0].getTime(), start.getTime(), message + " (first equal)");
@@ -174,10 +175,17 @@ QUnit.test("dateRangeToDates", function(assert) {
                          new Date(2001, 0, 1, 0, 0, 0, 0),
                          new Date(2012, 2, 2, 0, 0, 0, 0),
                          "Simple date range.");
+
     assertValidDateRange(BlockPuzzle.dateRangeToDates("02/03/2012-01/01/2001"),
                          new Date(2001, 0, 1, 0, 0, 0, 0),
                          new Date(2012, 2, 2, 0, 0, 0, 0),
                          "Proper ordering when range goes backward in time.");
+
+    assertValidDateRange(BlockPuzzle.dateRangeToDates("01/01/2017 - 08/01/2017"),
+                         new Date(2017, 0, 1, 0, 0, 0, 0),
+                         new Date(2017, 0, 8, 0, 0, 0, 0),
+                         "Date range with spaces.");
+
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("Q1/2001"),
                          new Date(2001, 0, 1, 0, 0, 0, 0),
@@ -191,8 +199,13 @@ QUnit.test("dateRangeToDates", function(assert) {
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("02/2001-05/2001"),
                          new Date(2001, 1, 1, 0, 0, 0, 0),
-                         new Date(2001, 4, 1, 0, 0, 0, 0),
+                         new Date(2001, 4, 31, 0, 0, 0, 0),
                          "Month range.");
+
+    assertValidDateRange(BlockPuzzle.dateRangeToDates("1/2017 - 3/2017"),
+                         new Date(2017, 0, 1, 0, 0, 0, 0),
+                         new Date(2017, 3, 0, 0, 0, 0, 0),
+                         "Month range with spaces.");
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("02/2001-05/05/2001"),
                          new Date(2001, 1, 1, 0, 0, 0, 0),
@@ -206,7 +219,7 @@ QUnit.test("dateRangeToDates", function(assert) {
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("H1/2001-H1/2002"),
                          new Date(2001, 0, 1, 0, 0, 0, 0),
-                         new Date(2002, 5quarterYear, 30, 0, 0, 0, 0),
+                         new Date(2002, 5, 30, 0, 0, 0, 0),
                          "Half range.");
 
     assert.strictEqual(BlockPuzzle.dateRangeToDates("Q1"), null, "Invalid quarter string");

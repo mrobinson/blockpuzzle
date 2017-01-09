@@ -166,8 +166,8 @@ QUnit.test("dateRangeToDates", function(assert) {
         assert.notEqual(datePair, null, message + " (not null)");
         assert.equal(datePair.length, 2, message + " (length 2)");
         assert.ok(datePair[0] <= datePair[1], message + " (earliest first)");
-        assert.equal(datePair[0].getTime(), start.getTime(), message + "(first equal)");
-        assert.equal(datePair[1].getTime(), end.getTime(), message + "(second equal)");
+        assert.equal(datePair[0].getTime(), start.getTime(), message + " (first equal)");
+        assert.equal(datePair[1].getTime(), end.getTime(), message + " (second equal)");
     }
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("01/01/2001-02/03/2012"),
@@ -198,6 +198,16 @@ QUnit.test("dateRangeToDates", function(assert) {
                          new Date(2001, 1, 1, 0, 0, 0, 0),
                          new Date(2001, 4, 5, 0, 0, 0, 0),
                          "Month range with date on one end.");
+
+    assertValidDateRange(BlockPuzzle.dateRangeToDates("H1/2001"),
+                         new Date(2001, 0, 1, 0, 0, 0, 0),
+                         new Date(2001, 5, 30, 0, 0, 0, 0),
+                         "Simple half.");
+
+    assertValidDateRange(BlockPuzzle.dateRangeToDates("H1/2001-H1/2002"),
+                         new Date(2001, 0, 1, 0, 0, 0, 0),
+                         new Date(2002, 5quarterYear, 30, 0, 0, 0, 0),
+                         "Half range.");
 
     assert.strictEqual(BlockPuzzle.dateRangeToDates("Q1"), null, "Invalid quarter string");
 });

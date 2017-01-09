@@ -945,6 +945,18 @@ var BlockPuzzle = {
         }
     },
 
+    getDateForHalf: function(halfNumber, halfYear, lastDay) {
+        if (!lastDay) {
+            return new Date(halfYear, (halfNumber - 1) * 6, 1, 0, 0, 0, 0);
+        } else {
+            // The day field is 1-indexed, so selecting zero as the day
+            // should create a date representing the last day of the previous
+            // month.
+            return new Date(halfYear, halfNumber * 6, 0, 0, 0, 0, 0);
+        }
+    },
+
+
     convertTextToData: function(text) {
         var lines = text.split("\n");
         var data = {tracks: []};
@@ -1032,7 +1044,7 @@ var BlockPuzzle = {
         }
 
         var monthDateRegex = /^(\d\d?)\/(\d\d\d\d)/;
-        var match = monthDateRegex.exec(dateString);
+        match = monthDateRegex.exec(dateString);
         if (match) {
             return new Date(parseInt(match[2]),
                             parseInt(match[1]) - 1, // Month is zero-indexed.
@@ -1045,6 +1057,14 @@ var BlockPuzzle = {
             return BlockPuzzle.getDateForQuarter(parseInt(match[1]),
                                                  parseInt(match[2]),
                                                  false);
+        }
+
+        var halfRegex = /^H([1,2])\/(\d\d\d\d)/;
+        match = halfRegex.exec(dateString);
+        if (match) {
+            return BlockPuzzle.getDateForHalf(parseInt(match[1]),
+                                              parseInt(match[2]),
+                                              false);
         }
 
         return null;
@@ -1068,6 +1088,24 @@ var BlockPuzzle = {
             return [start, end];
         }
 
+        var halfRangeRegex = /H([1,2])\/(\d\d\d\d)\s*-\s*H([1,2])\/(\d\d\d\d)/;
+        match = halfRangeRegex.exec(dateString);
+        if (match) {
+            var half1 = parseInt(match[1]);
+            var year1 = parseInt(match[2]);
+            var half2 = parseInt(match[3]);
+            var year2 = parseInt(match[4]);
+            var start = BlockPuzzle.getDateForHalf(half1, year1, false);
+            var end = BlockPuzzle.getDateForHalf(half2, year2, true);
+            if (start > end) { // Reverse range.
+                start = BlockPuzzle.getDateForHalf(half2, year2, false);
+                end = BlockPuzzle.getDateForHalf(half1, year1, true);
+            }
+
+            return [start, end];
+        }
+
+
         var rangeRegex = /([^-]+)-([^-]+)/;
         match = rangeRegex.exec(dateString);
         if (match) {
@@ -1087,6 +1125,15 @@ var BlockPuzzle = {
             var year = parseInt(match[2]);
             return [BlockPuzzle.getDateForQuarter(quarter, year, false),
                     BlockPuzzle.getDateForQuarter(quarter, year, true)];
+        }
+
+        var halfRegex = /H([1,2])\/(\d\d\d\d)/;
+        match = halfRegex.exec(dateString);
+        if (match) {
+            var half = parseInt(match[1]);
+            var year = parseInt(match[2]);
+            return [BlockPuzzle.getDateForHalf(half, year, false),
+                    BlockPuzzle.getDateForHalf(half, year, true)];
         }
 
         return null;

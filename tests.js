@@ -19,42 +19,47 @@ var emptyData = {
 };
 
 QUnit.test("convertTextToData values", function(assert) {
-    var data = BlockPuzzle.convertTextToData("value: nice");
-    assert.propEqual(data, {tracks: [], value: "nice"});
+    var data = BlockPuzzle.convertTextToData("AVAILABLE_HOURS: 10");
+    assert.equal(data.options.AVAILABLE_HOURS, 10);
 
-    data = BlockPuzzle.convertTextToData("value: 42");
-    assert.propEqual(data, {tracks: [], value: "42"}, "Simple example");
+    data = BlockPuzzle.convertTextToData("AVAILABLE_HOURS: 42");
+    assert.equal(data.options.AVAILABLE_HOURS, 42);
 
-    data = BlockPuzzle.convertTextToData("value: \twhitespace\tin\tthe\tmiddle\t");
-    assert.propEqual(data, {tracks: [], value: "whitespace\tin\tthe\tmiddle"}, "Whitespace should be trimmed");
+    data = BlockPuzzle.convertTextToData("LABEL_FONT_FAMILY: a longer string with spaces");
+    assert.equal(data.options.LABEL_FONT_FAMILY, "a longer string with spaces", "Simple example with spaces");
 
-    data = BlockPuzzle.convertTextToData("value: a longer string with spaces");
-    assert.propEqual(data, {tracks: [], value: "a longer string with spaces"}, "Simple example with spaces");
+    data = BlockPuzzle.convertTextToData("LABEL_FONT_FAMILY: \twhitespace\tin\tthe\tmiddle\t");
+    assert.equal(data.options.LABEL_FONT_FAMILY, "whitespace\tin\tthe\tmiddle", "Whitespace should be trimmed");
 });
+
+function convertTextToDataNoOptions(string) {
+    var data = BlockPuzzle.convertTextToData(string);
+    delete data["options"];
+    return data;
+}
 
 QUnit.test("convertTextToData tracks", function(assert) {
     var simpleTrack = {
         tracks: [ { name: 'user1', reservations: []} ],
-        value: "42",
     };
 
-    var data = BlockPuzzle.convertTextToData("value: 42\n* user1\n");
+    var data = convertTextToDataNoOptions("AVAILABLE_HOURS: 42\n* user1\n");
     assert.propEqual(data, simpleTrack, "Whitespace shouldn't matter");
 
-    data = BlockPuzzle.convertTextToData("value: 42\n*\tuser1\t\n");
+    data = convertTextToDataNoOptions("AVAILABLE_HOURS: 42\n*\tuser1\t\n");
     assert.propEqual(data, simpleTrack, "Whitespace shouldn't matter.");
 
-    data = BlockPuzzle.convertTextToData("value: 42\n*user1");
+    data = convertTextToDataNoOptions("AVAILABLE_HOURS: 42\n*user1");
     assert.propEqual(data, simpleTrack, "Whitespace shouldn't matter.");
 
-    data = BlockPuzzle.convertTextToData("*user1\nvalue: 42\n");
+    data = convertTextToDataNoOptions("*user1\nAVAILABLE_HOURS: 42\n");
     assert.propEqual(data, simpleTrack, "Order shouldn't matter.");
 
     var simpleTrack2 = {
         tracks: [ { name: 'User One', reservations: []} ],
     };
 
-    data = BlockPuzzle.convertTextToData(" * User One ");
+    data = convertTextToDataNoOptions(" * User One ");
     assert.propEqual(data, simpleTrack2, "Track name should support whitespace.");
 
     var multipleTracks = {
@@ -65,10 +70,10 @@ QUnit.test("convertTextToData tracks", function(assert) {
         ],
     };
 
-    data = BlockPuzzle.convertTextToData(" * User One \n * User Two\t\n* User Three\t");
+    data = convertTextToDataNoOptions(" * User One \n * User Two\t\n* User Three\t");
     assert.propEqual(data, multipleTracks, "Multiple tracks.");
 
-    data = BlockPuzzle.convertTextToData(" * \t\t");
+    data = convertTextToDataNoOptions(" * \t\t");
     assert.propEqual(data, emptyData, "Don't add track with empty track name.");
 });
 
@@ -84,7 +89,7 @@ QUnit.test("convertTextToData reservations", function(assert) {
         } ],
     };
 
-    var data = BlockPuzzle.convertTextToData("* User One\n - Reservation One: Q1/2001");
+    var data = convertTextToDataNoOptions("* User One\n - Reservation One: Q1/2001");
     assert.propEqual(data, simpleReservation, "Simple reservation");
 
     var rangeReservation = {
@@ -98,7 +103,7 @@ QUnit.test("convertTextToData reservations", function(assert) {
         } ],
     };
 
-    data = BlockPuzzle.convertTextToData("* User One\n - Reservation One: 1/21/2009-2/23/2009");
+    data = convertTextToDataNoOptions("* User One\n - Reservation One: 1/21/2009-2/23/2009");
     assert.propEqual(data, rangeReservation, "Reservation with more complex range");
 
     rangeReservation = {
@@ -112,11 +117,11 @@ QUnit.test("convertTextToData reservations", function(assert) {
         } ],
     };
 
-    data = BlockPuzzle.convertTextToData("* User One\n - Reservation One: Q3/2009-Q4/2009, 30hrs");
+    data = convertTextToDataNoOptions("* User One\n - Reservation One: Q3/2009-Q4/2009, 30hrs");
     assert.propEqual(data, rangeReservation, "Reservation with more complex range");
-    data = BlockPuzzle.convertTextToData(" - Reservation One: Q3/2009-Q4/2009, 30");
+    data = convertTextToDataNoOptions(" - Reservation One: Q3/2009-Q4/2009, 30");
     assert.propEqual(data, emptyData, "Don't add data when there is no current track.");
-    data = BlockPuzzle.convertTextToData("\t\n - \tReservation One: Q3/2009-Q4/2009, 30 hrs");
+    data = convertTextToDataNoOptions("\t\n - \tReservation One: Q3/2009-Q4/2009, 30 hrs");
     assert.propEqual(data, emptyData, "Don't add data when there is no current track.");
 
     var emptyTrack = {
@@ -126,7 +131,7 @@ QUnit.test("convertTextToData reservations", function(assert) {
         } ],
     };
 
-    data = BlockPuzzle.convertTextToData("* User One\n - \t: Q3-Q4");
+    data = convertTextToDataNoOptions("* User One\n - \t: Q3-Q4");
     assert.propEqual(data, emptyTrack, "Don't add reservation when the name is empty.");
 
     unconfirmedRangeReservation = {
@@ -140,7 +145,7 @@ QUnit.test("convertTextToData reservations", function(assert) {
         } ],
     };
 
-    data = BlockPuzzle.convertTextToData("* User One\n + Reservation One: Q3/2009-Q4/2009, 30hrs");
+    data = convertTextToDataNoOptions("* User One\n + Reservation One: Q3/2009-Q4/2009, 30hrs");
     assert.propEqual(data, unconfirmedRangeReservation,
                      "Unconfirmed Reservation with more complex range");
 });
@@ -226,16 +231,33 @@ QUnit.test("dateRangeToDates", function(assert) {
 });
 
 QUnit.test("Canvas.hoursStringtoHours", function(assert) {
-    assert.strictEqual(BlockPuzzle.hoursStringToHours("24"), 24,
+    let options = new BlockPuzzle.Options();
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("24", options), 24,
                        "Simple integer hours");
-    assert.strictEqual(BlockPuzzle.hoursStringToHours("24."), 24,
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("24.", options), 24,
                        "Simple integer hours with decimal point");
-    assert.strictEqual(BlockPuzzle.hoursStringToHours("24.456"), 24.456,
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("24.456", options), 24.456,
                        "Simple decimal hours");
-    assert.strictEqual(BlockPuzzle.hoursStringToHours("24.456 hrs"), 24.456,
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("24.456 hrs", options), 24.456,
                        "Simple decimal hours with 'hrs'");
-    assert.strictEqual(BlockPuzzle.hoursStringToHours("24.456hrs"), 24.456,
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("24.456hrs", options), 24.456,
                        "Simple decimal hours with 'hrs' attached");
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("1fte", options), 40,
+                       "Simple integer hours with 'fte' attached");
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("1fte", options), 40,
+                       "Simple integer hours with ' fte' attached");
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("2fte", options), 80,
+                       "Another integer hours with 'fte' attached");
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("0.5fte", options), 20,
+                       "Simple decimal hours with 'fte, options' attached");
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("0.1fte", options), 4,
+                       "Another decimal hours with 'fte' attached");
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("0.1FTE", options), 4,
+                       "Simple decimal hours with 'FTE' attached");
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("0.1 FTE", options), 4,
+                       "Simple decimal hours with ' FTE' attached");
+    assert.strictEqual(BlockPuzzle.hoursStringToHours("0.1\tFTE", options), 4,
+                       "Simple decimal hours with '\\tFTE' attached");
 });
 
 QUnit.test("Canvas.addData", function(assert) {

@@ -16,52 +16,61 @@
 
 var BlockPuzzle = {
     Options: function(template) {
-        this.overrideNumberFromTemplate = function(template, key, defaultValue, number) {
-            if (template === undefined || template[key] === undefined)
-                this[key] = defaultValue;
-            else
-                this[key] = parseFloat(template[key]);
-        };
+        this.override = function(key, value) {
+            let number_keys = [
+                "AVAILABLE_HOURS", "FREE_TIME_HOURS", "TRACK_HEIGHT", "TRACK_BORDER_WIDTH",
+                "TRACK_GAP", "LABEL_GAP", "LABEL_FONT_SIZE", "TRACK_LEFT_LABEL_WIDTH",
+                "CANVAS_TOP_LABEL_HEIGHT", "RESERVATION_PADDING",
+            ];
+            for (let number_key of number_keys) {
+                if (number_key == key) {
+                    this[key] = parseFloat(value);
+                    return;
+                }
+            }
 
-        this.overrideValueFromTemplate = function(template, key, defaultValue, number) {
-            if (template === undefined || template[key] === undefined)
-                this[key] = defaultValue;
-            else
-                this[key] = template[key];
-        };
+            if (key == "LABEL_FONT_FAMILY") {
+                this[key] = value;
+                return;
+            }
 
-        this.overrideNumberFromTemplate(template, "AVAILABLE_HOURS", 40);
+            console.warn("Tried to set unknown setting: " + key);
+        }
+
+        this.LABEL_FONT_FAMILY =  "sans-serif";
+
+        this.AVAILABLE_HOURS =  40;
 
         // When reservations don't have any hours specified, free time can optionally steal
         // some of those hours. These hours, as with other reservations with no hours
         // specified will not be allocated if the available hours are totally consumed.
-        this.overrideNumberFromTemplate(template, "FREE_TIME_HOURS", 5);
+        this.FREE_TIME_HOURS = 5;
 
         // The height of the track.
-        this.overrideNumberFromTemplate(template, "TRACK_HEIGHT", 40);
+        this.TRACK_HEIGHT = 40;
 
         // The size of the border that surrounds tracks.
-        this.overrideNumberFromTemplate(template, "TRACK_BORDER_WIDTH", 2);
+        this.TRACK_BORDER_WIDTH = 2;
 
-        this.overrideNumberFromTemplate(template, "TRACK_GAP", 10);
+        this.TRACK_GAP = 10;
 
         // The gap between labels and the thing that they point to.
-        this.overrideNumberFromTemplate(template, "LABEL_GAP", 8);
+        this.LABEL_GAP = 8;
 
         // The font size for the labels.
-        this.overrideNumberFromTemplate(template, "LABEL_FONT_SIZE", 10);
+        this.LABEL_FONT_SIZE = 10;
 
         // The font family for the labels.
-        this.overrideValueFromTemplate(template, "LABEL_FONT_FAMILY", "sans-serif");
+        this.ABEL_FONT_FAMILY = "sans-serif";
 
         // The space on the left hand side of the chart used to print the track name.
-        this.overrideNumberFromTemplate(template, "TRACK_LEFT_LABEL_WIDTH", 100);
+        this.TRACK_LEFT_LABEL_WIDTH = 100;
 
         // The space on the left hand side of the chart used to print the track name.
-        this.overrideNumberFromTemplate(template, "CANVAS_TOP_LABEL_HEIGHT", 40);
+        this.CANVAS_TOP_LABEL_HEIGHT = 40;
 
         // The vertical padding between reservations within a track.
-        this.overrideNumberFromTemplate(template, "RESERVATION_PADDING", 1);
+        this.RESERVATION_PADDING = 1;
 
         this.COLOR_SCHEME = {
             label: "black",
@@ -766,8 +775,8 @@ var BlockPuzzle = {
             this.dateGrid = new BlockPuzzle.DateGrid(this.startDate, this.endDate, this.options);
         };
 
-        this.setOptions = function(options ) {
-            this.options = new BlockPuzzle.Options(options);
+        this.setOptions = function(data) {
+            this.options = data.options;
         };
 
         this.setData = function(data) {
@@ -959,7 +968,7 @@ var BlockPuzzle = {
 
     convertTextToData: function(text) {
         var lines = text.split("\n");
-        var data = {tracks: []};
+        var data = {tracks: [], options: new BlockPuzzle.Options()};
         var settingRegex = /^(\w+):([^\n]*)$/;
         var trackRegex = /^\s*\*([^\n]+)$/;
         var reservationRegex = /^\s*(-|\+)([^:]+):\s*([^\n]*)\s*$/;
@@ -972,7 +981,7 @@ var BlockPuzzle = {
             if (settingMatch) {
                 var key = settingMatch[1].trim();
                 var value = settingMatch[2].trim();
-                data[key] = value;
+                data.options.override(key, value);
                 continue;
             }
 
@@ -1009,7 +1018,8 @@ var BlockPuzzle = {
 
                 var hours = null;
                 if (dateAndHoursStrings.length > 1) {
-                    hours = BlockPuzzle.hoursStringToHours(dateAndHoursStrings[1].trim());
+                    hours = BlockPuzzle.hoursStringToHours(dateAndHoursStrings[1].trim(),
+                                                           data.options);
                 }
 
                 currentTrack.reservations.push({
@@ -1025,7 +1035,12 @@ var BlockPuzzle = {
         return data;
     },
 
-    hoursStringToHours: function(hoursString) {
+    hoursStringToHours: function(hoursString, options) {
+        var fteRegex = new RegExp("^(\\d+\\.?\\d*)\\s*fte", "i");
+        var match = fteRegex.exec(hoursString);
+        if (match)
+            return parseFloat(match[1]) * options.AVAILABLE_HOURS;
+
         var hoursRegex = /^(\d+\.?\d*)/;
         var match = hoursRegex.exec(hoursString);
         if (!match)

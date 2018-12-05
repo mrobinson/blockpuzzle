@@ -227,6 +227,16 @@ QUnit.test("dateRangeToDates", function(assert) {
                          new Date(2002, 5, 30, 0, 0, 0, 0),
                          "Half range.");
 
+    assertValidDateRange(BlockPuzzle.dateRangeToDates("2001"),
+                         new Date(2001, 0, 1, 0, 0, 0, 0),
+                         new Date(2001, 11, 31, 0, 0, 0, 0),
+                         "Year range.");
+
+    assertValidDateRange(BlockPuzzle.dateRangeToDates("0001"),
+                         new Date(1, 0, 1, 0, 0, 0, 0),
+                         new Date(1, 11, 31, 0, 0, 0, 0),
+                         "Odd range.");
+
     assert.strictEqual(BlockPuzzle.dateRangeToDates("Q1"), null, "Invalid quarter string");
 });
 

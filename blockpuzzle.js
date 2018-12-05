@@ -1088,6 +1088,13 @@ var BlockPuzzle = {
                     BlockPuzzle.getDateForHalf(parseInt(match[1]), parseInt(match[2]), true)];
         }
 
+        var yearRegex = /^(\d\d\d\d)/;
+        match = yearRegex.exec(dateString);
+        if (match) {
+            return [BlockPuzzle.getDateForHalf(1, parseInt(match[1]), false),
+                    BlockPuzzle.getDateForHalf(2, parseInt(match[1]), true)];
+        }
+
         return null;
     },
 

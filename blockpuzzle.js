@@ -943,6 +943,30 @@ var BlockPuzzle = {
         }.bind(this));
     },
 
+    getDateForWeek: function(weekNumber, weekYear, lastDay) {
+        var millisecondsInADay = 1000 * 60 * 60 * 24;
+
+        // According to ISO 8601, week 1 of the year is the week that contains
+        // January 4th. The first day of week 1 is the Monday of that week.
+        // To find the first day of this week, we search backward by days to
+        // find Monday.
+        var mondayOfWeekOne = new Date(Date.UTC(weekYear, 0, 4, 0, 0, 0, 0));
+        while (mondayOfWeekOne.getDay() != 1) {
+            mondayOfWeekOne.setTime(mondayOfWeekOne.getTime() - millisecondsInADay);
+        }
+
+        if (!lastDay) {
+            mondayOfWeekOne.setTime(mondayOfWeekOne.getTime() +
+                (millisecondsInADay * 7 * (weekNumber - 1)));
+        } else {
+            // since the lastDay is inclusive, we look six days ahead from the
+            // first day of the week.
+            mondayOfWeekOne.setTime(mondayOfWeekOne.getTime() +
+                (millisecondsInADay * ((7 * weekNumber) - 1)));
+        }
+        return mondayOfWeekOne;
+    },
+
     getDateForQuarter: function(quarterNumber, quarterYear, lastDay) {
         if (!lastDay) {
             return new Date(quarterYear, (quarterNumber - 1) * 3, 1, 0, 0, 0, 0);
@@ -1072,6 +1096,14 @@ var BlockPuzzle = {
                              parseInt(match[1]),
                              0, 0, 0, 0, 0)];
 
+        }
+
+        var weekRegex = /^W(\d\d?)\/(\d\d\d\d)/;
+        match = weekRegex.exec(dateString);
+        if (match) {
+            var a = [BlockPuzzle.getDateForWeek(parseInt(match[1]), parseInt(match[2]), false),
+                    BlockPuzzle.getDateForWeek(parseInt(match[1]), parseInt(match[2]), true)];
+            return a;
         }
 
         var quarterRegex = /^Q([1,2,3,4])\/(\d\d\d\d)/;

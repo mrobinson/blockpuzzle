@@ -150,6 +150,33 @@ QUnit.test("convertTextToData reservations", function(assert) {
                      "Unconfirmed Reservation with more complex range");
 });
 
+QUnit.test("Week Numbers", function(assert) {
+    var week = BlockPuzzle.dateStringToDate("W1/2019");
+    assert.equal(week[0].getTime(), (new Date(Date.UTC(2018, 11, 31))).getTime(), "Simple week number");
+    assert.equal(week[1].getTime(), (new Date(Date.UTC(2019, 0, 6))).getTime(), "Simple week number");
+
+    // This week should start on the second, because the first of January
+    // is a Sunday.
+    week = BlockPuzzle.dateStringToDate("W1/2017");
+    assert.equal(week[0].getTime(), (new Date(Date.UTC(2017, 0, 2))).getTime(),
+                 "Week number for week starting on the 2nd");
+    assert.equal(week[1].getTime(), (new Date(Date.UTC(2017, 0, 8))).getTime(),
+                 "Week number for week starting on the 2nd");
+
+    // This last week of the previous year should end on January 1st.
+    week = BlockPuzzle.dateStringToDate("W52/2016");
+    assert.equal(week[0].getTime(), (new Date(Date.UTC(2016, 11, 26))).getTime(),
+                 "Week number for year before week 1 starting on the 2nd");
+    assert.equal(week[1].getTime(), (new Date(Date.UTC(2017, 0, 1))).getTime(),
+                 "Week number for year before week 1 starting on the 2nd");
+
+    week = BlockPuzzle.dateStringToDate("W11/2019");
+    assert.equal(week[0].getTime(), (new Date(Date.UTC(2019, 2, 11))).getTime(),
+                 "Week number in the middle of the year");
+    assert.equal(week[1].getTime(), (new Date(Date.UTC(2019, 2, 17))).getTime(),
+                 "Week number in the middle of the year");
+});
+
 QUnit.test("dateStringToDate", function(assert) {
     assert.equal(BlockPuzzle.dateStringToDate("01/01/2001")[0].getTime(),
                  (new Date(2001, 0, 1, 0, 0, 0, 0)).getTime(),

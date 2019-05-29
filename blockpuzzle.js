@@ -377,8 +377,8 @@ var BlockPuzzle = {
         this.name = name;
 
         // Normalize dates to all be at midnight.
-        this.start = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
-        this.end = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 0, 0, 0, 0);
+        this.start = new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0));
+        this.end = new Date(Date.UTC(end.getFullYear(), end.getMonth(), end.getDate(), 0, 0, 0, 0));
         this.confirmed = confirmed === undefined || confirmed;
         this.topPoints = [];
         this.bottomPoints = [];
@@ -950,7 +950,7 @@ var BlockPuzzle = {
         // January 4th. The first day of week 1 is the Monday of that week.
         // To find the first day of this week, we search backward by days to
         // find Monday.
-        var mondayOfWeekOne = new Date(Date.UTC(weekYear, 0, 4, 0, 0, 0, 0));
+        var mondayOfWeekOne = new Date(Date.UTC(weekYear, 0, 4));
         while (mondayOfWeekOne.getDay() != 1) {
             mondayOfWeekOne.setTime(mondayOfWeekOne.getTime() - millisecondsInADay);
         }
@@ -969,23 +969,23 @@ var BlockPuzzle = {
 
     getDateForQuarter: function(quarterNumber, quarterYear, lastDay) {
         if (!lastDay) {
-            return new Date(quarterYear, (quarterNumber - 1) * 3, 1, 0, 0, 0, 0);
+            return new Date(Date.UTC(quarterYear, (quarterNumber - 1) * 3, 1));
         } else {
             // The day field is 1-indexed, so selecting zero as the day
             // should create a date representing the last day of the previous
             // month.
-            return new Date(quarterYear, quarterNumber * 3, 0, 0, 0, 0, 0);
+            return new Date(Date.UTC(quarterYear, quarterNumber * 3, 0));
         }
     },
 
     getDateForHalf: function(halfNumber, halfYear, lastDay) {
         if (!lastDay) {
-            return new Date(halfYear, (halfNumber - 1) * 6, 1, 0, 0, 0, 0);
+            return new Date(Date.UTC(halfYear, (halfNumber - 1) * 6, 1));
         } else {
             // The day field is 1-indexed, so selecting zero as the day
             // should create a date representing the last day of the previous
             // month.
-            return new Date(halfYear, halfNumber * 6, 0, 0, 0, 0, 0);
+            return new Date(Date.UTC(halfYear, halfNumber * 6, 0));
         }
     },
 
@@ -1077,24 +1077,26 @@ var BlockPuzzle = {
         var fullDateRegex = /^(\d\d?)\/(\d\d?)\/(\d\d\d\d)/;
         var match = fullDateRegex.exec(dateString);
         if (match) {
-            var date = new Date(parseInt(match[3]),
-                                parseInt(match[2]) - 1, // Month is zero-indexed.
-                                parseInt(match[1]),
-                                0, 0, 0, 0);
+            var date = new Date(Date.UTC(
+                parseInt(match[3]),
+                parseInt(match[2]) - 1, // Month is zero-indexed.
+                parseInt(match[1])));
             return [date, date];
         }
 
         var monthDateRegex = /^(\d\d?)\/(\d\d\d\d)/;
         match = monthDateRegex.exec(dateString);
         if (match) {
-            return [new Date(parseInt(match[2]),
-                             parseInt(match[1]) - 1, // Month is zero-indexed.
-                             1, 0, 0, 0, 0),
+            return [new Date(Date.UTC(
+                        parseInt(match[2]),
+                        parseInt(match[1]) - 1, // Month is zero-indexed.
+                        1)),
                     // We want the last day of the month, so we return the
                     // 0th day of the next month, which should be the same.
-                    new Date(parseInt(match[2]),
-                             parseInt(match[1]),
-                             0, 0, 0, 0, 0)];
+                    new Date(Date.UTC(
+                            parseInt(match[2]),
+                            parseInt(match[1]),
+                            0))];
 
         }
 

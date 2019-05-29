@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+function createUTCDate(year, month, day) {
+    return new Date(Date.UTC(year, month, day));
+}
+
 var emptyData = {
     tracks: [ ]
 };
@@ -84,8 +88,8 @@ QUnit.test("convertTextToData reservations", function(assert) {
             reservations: [ { name: 'Reservation One',  
                               confirmed: true,
                               hours: null,
-                              start: new Date(2001, 0, 1, 0, 0, 0, 0),
-                              end: new Date(2001, 2, 31, 0, 0, 0, 0) } ],
+                              start: createUTCDate(2001, 0, 1),
+                              end: createUTCDate(2001, 2, 31) } ],
         } ],
     };
 
@@ -98,8 +102,8 @@ QUnit.test("convertTextToData reservations", function(assert) {
             reservations: [ { name: 'Reservation One', 
                               confirmed: true,
                               hours: null,
-                              start: new Date(2009, 0, 21, 0, 0, 0, 0),
-                              end: new Date(2009, 1, 23, 0, 0, 0, 0) } ],
+                              start: createUTCDate(2009, 0, 21),
+                              end: createUTCDate(2009, 1, 23) } ],
         } ],
     };
 
@@ -112,8 +116,8 @@ QUnit.test("convertTextToData reservations", function(assert) {
             reservations: [ { name: 'Reservation One',
                               confirmed: true,
                               hours: 30,
-                              start: new Date(2009, 5, 1, 0, 0, 0, 0),
-                              end: new Date(2009, 11, 31, 0, 0, 0, 0) } ],
+                              start: createUTCDate(2009, 5, 1),
+                              end: createUTCDate(2009, 11, 31) } ],
         } ],
     };
 
@@ -140,8 +144,8 @@ QUnit.test("convertTextToData reservations", function(assert) {
             reservations: [ { name: 'Reservation One',
                               confirmed: false,
                               hours: 30,
-                              start: new Date(2009, 5, 1, 0, 0, 0, 0),
-                              end: new Date(2009, 11, 31, 0, 0, 0, 0) } ],
+                              start: createUTCDate(2009, 5, 1),
+                              end: createUTCDate(2009, 11, 31) } ],
         } ],
     };
 
@@ -152,42 +156,42 @@ QUnit.test("convertTextToData reservations", function(assert) {
 
 QUnit.test("Week Numbers", function(assert) {
     var week = BlockPuzzle.dateStringToDate("W1/2019");
-    assert.equal(week[0].getTime(), (new Date(Date.UTC(2018, 11, 31))).getTime(), "Simple week number");
-    assert.equal(week[1].getTime(), (new Date(Date.UTC(2019, 0, 6))).getTime(), "Simple week number");
+    assert.equal(week[0].getTime(), (createUTCDate(2018, 11, 31).getTime()), "Simple week number");
+    assert.equal(week[1].getTime(), (createUTCDate(2019, 0, 6).getTime()), "Simple week number");
 
     // This week should start on the second, because the first of January
     // is a Sunday.
     week = BlockPuzzle.dateStringToDate("W1/2017");
-    assert.equal(week[0].getTime(), (new Date(Date.UTC(2017, 0, 2))).getTime(),
+    assert.equal(week[0].getTime(), (createUTCDate(2017, 0, 2)).getTime(),
                  "Week number for week starting on the 2nd");
-    assert.equal(week[1].getTime(), (new Date(Date.UTC(2017, 0, 8))).getTime(),
+    assert.equal(week[1].getTime(), (createUTCDate(2017, 0, 8)).getTime(),
                  "Week number for week starting on the 2nd");
 
     // This last week of the previous year should end on January 1st.
     week = BlockPuzzle.dateStringToDate("W52/2016");
-    assert.equal(week[0].getTime(), (new Date(Date.UTC(2016, 11, 26))).getTime(),
+    assert.equal(week[0].getTime(), (createUTCDate(2016, 11, 26)).getTime(),
                  "Week number for year before week 1 starting on the 2nd");
-    assert.equal(week[1].getTime(), (new Date(Date.UTC(2017, 0, 1))).getTime(),
+    assert.equal(week[1].getTime(), (createUTCDate(2017, 0, 1)).getTime(),
                  "Week number for year before week 1 starting on the 2nd");
 
     week = BlockPuzzle.dateStringToDate("W11/2019");
-    assert.equal(week[0].getTime(), (new Date(Date.UTC(2019, 2, 11))).getTime(),
+    assert.equal(week[0].getTime(), (createUTCDate(2019, 2, 11)).getTime(),
                  "Week number in the middle of the year");
-    assert.equal(week[1].getTime(), (new Date(Date.UTC(2019, 2, 17))).getTime(),
+    assert.equal(week[1].getTime(), (createUTCDate(2019, 2, 17)).getTime(),
                  "Week number in the middle of the year");
 });
 
 QUnit.test("dateStringToDate", function(assert) {
     assert.equal(BlockPuzzle.dateStringToDate("01/01/2001")[0].getTime(),
-                 (new Date(2001, 0, 1, 0, 0, 0, 0)).getTime(),
+                 (createUTCDate(2001, 0, 1)).getTime(),
                  "Simple date.");
     assert.equal(BlockPuzzle.dateStringToDate("01/01/01"), null,
                  "Two digit years not supported.");
     assert.equal(BlockPuzzle.dateStringToDate("Q1/2012")[0].getTime(),
-                 (new Date(2012, 0, 1, 0, 0, 0, 0)).getTime(),
+                 (createUTCDate(2012, 0, 1)).getTime(),
                  "Simple quarter.");
     assert.equal(BlockPuzzle.dateStringToDate("12/2012")[0].getTime(),
-                 (new Date(2012, 11, 1, 0, 0, 0, 0)).getTime(),
+                 (createUTCDate(2012, 11, 1)).getTime(),
                  "Simple month date.");
     assert.equal(BlockPuzzle.dateStringToDate("alkja;ds lajsd;f alsf"),
                  null, "Random text should not return a date");
@@ -199,69 +203,74 @@ QUnit.test("dateRangeToDates", function(assert) {
         assert.notEqual(datePair[1], null, message + " (second not null)");
         assert.equal(datePair.length, 2, message + " (length 2)");
         assert.ok(datePair[0] <= datePair[1], message + " (earliest first)");
-        assert.equal(datePair[0].getTime(), start.getTime(), message + " (first equal)");
-        assert.equal(datePair[1].getTime(), end.getTime(), message + " (second equal)");
+        assert.deepEqual(datePair[0], start, message + " (first equal)");
+        assert.deepEqual(datePair[1], end, message + " (second equal)");
     }
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("01/01/2001-02/03/2012"),
-                         new Date(2001, 0, 1, 0, 0, 0, 0),
-                         new Date(2012, 2, 2, 0, 0, 0, 0),
+                         createUTCDate(2001, 0, 1),
+                         createUTCDate(2012, 2, 2),
                          "Simple date range.");
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("02/03/2012-01/01/2001"),
-                         new Date(2001, 0, 1, 0, 0, 0, 0),
-                         new Date(2012, 2, 2, 0, 0, 0, 0),
+                         createUTCDate(2001, 0, 1),
+                         createUTCDate(2012, 2, 2),
                          "Proper ordering when range goes backward in time.");
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("01/01/2017 - 08/01/2017"),
-                         new Date(2017, 0, 1, 0, 0, 0, 0),
-                         new Date(2017, 0, 8, 0, 0, 0, 0),
+                         createUTCDate(2017, 0, 1),
+                         createUTCDate(2017, 0, 8),
                          "Date range with spaces.");
 
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("Q1/2001"),
-                         new Date(2001, 0, 1, 0, 0, 0, 0),
-                         new Date(2001, 2, 31, 0, 0, 0, 0),
+                         createUTCDate(2001, 0, 1),
+                         createUTCDate(2001, 2, 31),
                          "Simple quarter.");
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("Q1/2001-Q1/2001"),
-                         new Date(2001, 0, 1, 0, 0, 0, 0),
-                         new Date(2001, 2, 31, 0, 0, 0, 0),
+                         createUTCDate(2001, 0, 1),
+                         createUTCDate(2001, 2, 31),
                          "Quarter range.");
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("02/2001-05/2001"),
-                         new Date(2001, 1, 1, 0, 0, 0, 0),
-                         new Date(2001, 4, 31, 0, 0, 0, 0),
+                         createUTCDate(2001, 1, 1),
+                         createUTCDate(2001, 4, 31),
                          "Month range.");
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("1/2017 - 3/2017"),
-                         new Date(2017, 0, 1, 0, 0, 0, 0),
-                         new Date(2017, 3, 0, 0, 0, 0, 0),
+                         createUTCDate(2017, 0, 1),
+                         createUTCDate(2017, 3, 0),
                          "Month range with spaces.");
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("02/2001-05/05/2001"),
-                         new Date(2001, 1, 1, 0, 0, 0, 0),
-                         new Date(2001, 4, 5, 0, 0, 0, 0),
+                         createUTCDate(2001, 1, 1),
+                         createUTCDate(2001, 4, 5),
                          "Month range with date on one end.");
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("H1/2001"),
-                         new Date(2001, 0, 1, 0, 0, 0, 0),
-                         new Date(2001, 5, 30, 0, 0, 0, 0),
+                         createUTCDate(2001, 0, 1),
+                         createUTCDate(2001, 5, 30),
                          "Simple half.");
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("H1/2001-H1/2002"),
-                         new Date(2001, 0, 1, 0, 0, 0, 0),
-                         new Date(2002, 5, 30, 0, 0, 0, 0),
+                         createUTCDate(2001, 0, 1),
+                         createUTCDate(2002, 5, 30),
                          "Half range.");
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("2001"),
-                         new Date(2001, 0, 1, 0, 0, 0, 0),
-                         new Date(2001, 11, 31, 0, 0, 0, 0),
+                         createUTCDate(2001, 0, 1),
+                         createUTCDate(2001, 11, 31),
+                         "Year range.");
+
+    assertValidDateRange(BlockPuzzle.dateRangeToDates("2019"),
+                         createUTCDate(2019, 0, 1),
+                         createUTCDate(2019, 11, 31),
                          "Year range.");
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("0001"),
-                         new Date(1, 0, 1, 0, 0, 0, 0),
-                         new Date(1, 11, 31, 0, 0, 0, 0),
+                         createUTCDate(1, 0, 1),
+                         createUTCDate(1, 11, 31),
                          "Odd range.");
 
     assert.strictEqual(BlockPuzzle.dateRangeToDates("Q1"), null, "Invalid quarter string");
@@ -303,8 +312,8 @@ QUnit.test("Canvas.addData", function(assert) {
             name: 'User One',
             reservations: [ { name: 'Reservation One',
                               hours: null,
-                              start: new Date(2001, 0, 1, 0, 0, 0, 0),
-                              end: new Date(2001, 2, 31, 0, 0, 0, 0) } ],
+                              start: createUTCDate(2001, 0, 1),
+                              end: createUTCDate(2001, 2, 31) } ],
         } ],
     };
     var canvas = new BlockPuzzle.Canvas(null);
@@ -366,52 +375,52 @@ QUnit.test("Slice.calculateHoursForReservations", function(assert) {
 });
 
 QUnit.test("Track.buildSlices", function(assert) {
-    var track = new BlockPuzzle.Track("Test", new Date(2014, 0, 1), new Date(2014, 11, 31));
+    var track = new BlockPuzzle.Track("Test", createUTCDate(2014, 0, 1), createUTCDate(2014, 11, 31));
     track.setReservations([
-        new BlockPuzzle.Reservation("A", new Date(2014, 0, 20), new Date(2014, 0, 31)),
-        new BlockPuzzle.Reservation("B", new Date(2014, 5, 10), new Date(2014, 6, 20))]);
+        new BlockPuzzle.Reservation("A", createUTCDate(2014, 0, 20), createUTCDate(2014, 0, 31)),
+        new BlockPuzzle.Reservation("B", createUTCDate(2014, 5, 10), createUTCDate(2014, 6, 20))]);
 
     function assertSliceStartAndEnd(slice, start, end, message) {
-        assert.equal(slice.start.getTime(), start.getTime(), message + " - start correct");
-        assert.equal(slice.end.getTime(), end.getTime(), message + " - end correct");
+        assert.deepEqual(slice.start, start, message + " - start correct");
+        assert.deepEqual(slice.end, end, message + " - end correct");
     }
 
     var message = "Slices for non-overlapping reservations";
     assert.equal(track.slices.length, 5, message);
-    assertSliceStartAndEnd(track.slices[0], new Date(2014, 0, 1), new Date(2014, 0, 19), message);
-    assertSliceStartAndEnd(track.slices[1], new Date(2014, 0, 20), new Date(2014, 0, 31), message);
-    assertSliceStartAndEnd(track.slices[2], new Date(2014, 1, 1), new Date(2014, 5, 9), message);
-    assertSliceStartAndEnd(track.slices[3], new Date(2014, 5, 10), new Date(2014, 6, 20), message);
-    assertSliceStartAndEnd(track.slices[4], new Date(2014, 6, 21), new Date(2014, 11, 31), message);
+    assertSliceStartAndEnd(track.slices[0], createUTCDate(2014, 0, 1), createUTCDate(2014, 0, 19), message);
+    assertSliceStartAndEnd(track.slices[1], createUTCDate(2014, 0, 20), createUTCDate(2014, 0, 31), message);
+    assertSliceStartAndEnd(track.slices[2], createUTCDate(2014, 1, 1), createUTCDate(2014, 5, 9), message);
+    assertSliceStartAndEnd(track.slices[3], createUTCDate(2014, 5, 10), createUTCDate(2014, 6, 20), message);
+    assertSliceStartAndEnd(track.slices[4], createUTCDate(2014, 6, 21), createUTCDate(2014, 11, 31), message);
 
-    track = new BlockPuzzle.Track("Test2", new Date(2014, 0, 1), new Date(2014, 11, 31));
+    track = new BlockPuzzle.Track("Test2", createUTCDate(2014, 0, 1), createUTCDate(2014, 11, 31));
     track.setReservations([
-        new BlockPuzzle.Reservation("A", new Date(2014, 0, 20), new Date(2014, 3, 30)),
-        new BlockPuzzle.Reservation("B", new Date(2014, 1, 15), new Date(2014, 4, 10))]);
+        new BlockPuzzle.Reservation("A", createUTCDate(2014, 0, 20), createUTCDate(2014, 3, 30)),
+        new BlockPuzzle.Reservation("B", createUTCDate(2014, 1, 15), createUTCDate(2014, 4, 10))]);
     message = "Slices for overlapping reservations";
     assert.equal(track.slices.length, 5, message);
-    assertSliceStartAndEnd(track.slices[0], new Date(2014, 0, 1), new Date(2014, 0, 19), message);
-    assertSliceStartAndEnd(track.slices[1], new Date(2014, 0, 20), new Date(2014, 1, 14), message);
-    assertSliceStartAndEnd(track.slices[2], new Date(2014, 1, 15), new Date(2014, 3, 30), message);
-    assertSliceStartAndEnd(track.slices[3], new Date(2014, 4, 1), new Date(2014, 4, 10), message);
-    assertSliceStartAndEnd(track.slices[4], new Date(2014, 4, 11), new Date(2014, 11, 31), message);
+    assertSliceStartAndEnd(track.slices[0], createUTCDate(2014, 0, 1), createUTCDate(2014, 0, 19), message);
+    assertSliceStartAndEnd(track.slices[1], createUTCDate(2014, 0, 20), createUTCDate(2014, 1, 14), message);
+    assertSliceStartAndEnd(track.slices[2], createUTCDate(2014, 1, 15), createUTCDate(2014, 3, 30), message);
+    assertSliceStartAndEnd(track.slices[3], createUTCDate(2014, 4, 1), createUTCDate(2014, 4, 10), message);
+    assertSliceStartAndEnd(track.slices[4], createUTCDate(2014, 4, 11), createUTCDate(2014, 11, 31), message);
 
-    track = new BlockPuzzle.Track("Test3", new Date(2014, 0, 1), new Date(2014, 11, 31));
+    track = new BlockPuzzle.Track("Test3", createUTCDate(2014, 0, 1), createUTCDate(2014, 11, 31));
     track.setReservations([
-        new BlockPuzzle.Reservation("A", new Date(2014, 0, 1), new Date(2014, 0, 20)),
-        new BlockPuzzle.Reservation("B", new Date(2014, 4, 1), new Date(2014, 5, 30)),
-        new BlockPuzzle.Reservation("C", new Date(2014, 2, 1), new Date(2014, 9, 31)),
-        new BlockPuzzle.Reservation("D", new Date(2014, 7, 1), new Date(2014, 8, 30)),
-        new BlockPuzzle.Reservation("E", new Date(2014, 4, 1), new Date(2014, 5, 30))]);
+        new BlockPuzzle.Reservation("A", createUTCDate(2014, 0, 1), createUTCDate(2014, 0, 20)),
+        new BlockPuzzle.Reservation("B", createUTCDate(2014, 4, 1), createUTCDate(2014, 5, 30)),
+        new BlockPuzzle.Reservation("C", createUTCDate(2014, 2, 1), createUTCDate(2014, 9, 31)),
+        new BlockPuzzle.Reservation("D", createUTCDate(2014, 7, 1), createUTCDate(2014, 8, 30)),
+        new BlockPuzzle.Reservation("E", createUTCDate(2014, 4, 1), createUTCDate(2014, 5, 30))]);
 
     message = "Complex slices";
     assert.equal(track.slices.length, 8, message);
-    assertSliceStartAndEnd(track.slices[0], new Date(2014, 0, 1), new Date(2014, 0, 20), message);
-    assertSliceStartAndEnd(track.slices[1], new Date(2014, 0, 21), new Date(2014, 1, 28), message);
-    assertSliceStartAndEnd(track.slices[2], new Date(2014, 2, 1), new Date(2014, 3, 30), message);
-    assertSliceStartAndEnd(track.slices[3], new Date(2014, 4, 1), new Date(2014, 5, 30), message);
-    assertSliceStartAndEnd(track.slices[4], new Date(2014, 6, 1), new Date(2014, 6, 31), message);
-    assertSliceStartAndEnd(track.slices[5], new Date(2014, 7, 1), new Date(2014, 8, 30), message);
-    assertSliceStartAndEnd(track.slices[6], new Date(2014, 9, 1), new Date(2014, 9, 31), message);
-    assertSliceStartAndEnd(track.slices[7], new Date(2014, 10, 1), new Date(2014, 11, 31), message);
+    assertSliceStartAndEnd(track.slices[0], createUTCDate(2014, 0, 1), createUTCDate(2014, 0, 20), message);
+    assertSliceStartAndEnd(track.slices[1], createUTCDate(2014, 0, 21), createUTCDate(2014, 1, 28), message);
+    assertSliceStartAndEnd(track.slices[2], createUTCDate(2014, 2, 1), createUTCDate(2014, 3, 30), message);
+    assertSliceStartAndEnd(track.slices[3], createUTCDate(2014, 4, 1), createUTCDate(2014, 5, 30), message);
+    assertSliceStartAndEnd(track.slices[4], createUTCDate(2014, 6, 1), createUTCDate(2014, 6, 31), message);
+    assertSliceStartAndEnd(track.slices[5], createUTCDate(2014, 7, 1), createUTCDate(2014, 8, 30), message);
+    assertSliceStartAndEnd(track.slices[6], createUTCDate(2014, 9, 1), createUTCDate(2014, 9, 31), message);
+    assertSliceStartAndEnd(track.slices[7], createUTCDate(2014, 10, 1), createUTCDate(2014, 11, 31), message);
 });

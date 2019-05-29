@@ -156,7 +156,7 @@ QUnit.test("convertTextToData reservations", function(assert) {
 
 QUnit.test("Week Numbers", function(assert) {
     var week = BlockPuzzle.dateStringToDate("W1/2019");
-    assert.equal(week[0].getTime(), (createUTCDate(2018, 11, 31).getTime()), "Simple week number");
+    assert.equal(week[0].getTime(), (createUTCDate(2019, 0, 1).getTime()), "Simple week number");
     assert.equal(week[1].getTime(), (createUTCDate(2019, 0, 6).getTime()), "Simple week number");
 
     // This week should start on the second, because the first of January
@@ -171,7 +171,7 @@ QUnit.test("Week Numbers", function(assert) {
     week = BlockPuzzle.dateStringToDate("W52/2016");
     assert.equal(week[0].getTime(), (createUTCDate(2016, 11, 26)).getTime(),
                  "Week number for year before week 1 starting on the 2nd");
-    assert.equal(week[1].getTime(), (createUTCDate(2017, 0, 1)).getTime(),
+    assert.equal(week[1].getTime(), (createUTCDate(2016, 11, 31)).getTime(),
                  "Week number for year before week 1 starting on the 2nd");
 
     week = BlockPuzzle.dateStringToDate("W11/2019");

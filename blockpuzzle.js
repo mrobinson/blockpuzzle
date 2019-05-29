@@ -954,16 +954,25 @@ var BlockPuzzle = {
         while (mondayOfWeekOne.getDay() != 1) {
             mondayOfWeekOne.setTime(mondayOfWeekOne.getTime() - millisecondsInADay);
         }
+        var date = mondayOfWeekOne;
 
         if (!lastDay) {
-            mondayOfWeekOne.setTime(mondayOfWeekOne.getTime() +
+            date.setTime(mondayOfWeekOne.getTime() +
                 (millisecondsInADay * 7 * (weekNumber - 1)));
         } else {
             // since the lastDay is inclusive, we look six days ahead from the
             // first day of the week.
-            mondayOfWeekOne.setTime(mondayOfWeekOne.getTime() +
+            date.setTime(mondayOfWeekOne.getTime() +
                 (millisecondsInADay * ((7 * weekNumber) - 1)));
         }
+
+        // For now, don't cross year boundaries from the week year. In the future,
+        // there will be more options for setting the canvas boundary dates.
+        if (weekNumber == 1 && date.getFullYear() != weekYear)
+            return new Date(Date.UTC(weekYear, 0, 1));
+        if (weekNumber != 1 && date.getFullYear() != weekYear)
+            return new Date(Date.UTC(weekYear, 11, 31));
+
         return mondayOfWeekOne;
     },
 

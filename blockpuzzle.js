@@ -35,7 +35,7 @@ var BlockPuzzle = {
             }
 
             console.warn("Tried to set unknown setting: " + key);
-        }
+        };
 
         this.LABEL_FONT_FAMILY =  "sans-serif";
 
@@ -1069,13 +1069,13 @@ var BlockPuzzle = {
     },
 
     hoursStringToHours: function(hoursString, options) {
-        var fteRegex = new RegExp("^(\\d+\\.?\\d*)\\s*fte", "i");
-        var match = fteRegex.exec(hoursString);
+        let fteRegex = new RegExp("^(\\d+\\.?\\d*)\\s*fte", "i");
+        let match = fteRegex.exec(hoursString);
         if (match)
             return parseFloat(match[1]) * options.AVAILABLE_HOURS;
 
-        var hoursRegex = /^(\d+\.?\d*)/;
-        var match = hoursRegex.exec(hoursString);
+        let hoursRegex = /^(\d+\.?\d*)/;
+        match = hoursRegex.exec(hoursString);
         if (!match)
             return null;
 
@@ -1109,7 +1109,7 @@ var BlockPuzzle = {
 
         }
 
-        var weekRegex = /^W(\d\d?)\/(\d\d\d\d)/;
+        var weekRegex = /^[wW](\d\d?)\/(\d\d\d\d)/;
         match = weekRegex.exec(dateString);
         if (match) {
             var a = [BlockPuzzle.getDateForWeek(parseInt(match[1]), parseInt(match[2]), false),
@@ -1117,14 +1117,14 @@ var BlockPuzzle = {
             return a;
         }
 
-        var quarterRegex = /^Q([1,2,3,4])\/(\d\d\d\d)/;
+        var quarterRegex = /^[qQ]([1,2,3,4])\/(\d\d\d\d)/;
         match = quarterRegex.exec(dateString);
         if (match) {
             return [BlockPuzzle.getDateForQuarter(parseInt(match[1]), parseInt(match[2]), false),
                     BlockPuzzle.getDateForQuarter(parseInt(match[1]), parseInt(match[2]), true)];
         }
 
-        var halfRegex = /^H([1,2])\/(\d\d\d\d)/;
+        var halfRegex = /^[hH]([1,2])\/(\d\d\d\d)/;
         match = halfRegex.exec(dateString);
         if (match) {
             return [BlockPuzzle.getDateForHalf(parseInt(match[1]), parseInt(match[2]), false),

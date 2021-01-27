@@ -1,3 +1,8 @@
-{ "name" : "blockpuzzle"
-, "version" : "0.0.1"
-, "dependencies" : { "qunitjs" : "1.17.1", "jshint": "latest" } }
+{
+  "name": "blockpuzzle",
+  "version": "0.0.1",
+  "dependencies": {
+    "jshint": "^2.12.0",
+    "qunitjs": "1.17.1"
+  }
+}

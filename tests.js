@@ -38,7 +38,7 @@ QUnit.test("convertTextToData values", function(assert) {
 
 function convertTextToDataNoOptions(string) {
     var data = BlockPuzzle.convertTextToData(string);
-    delete data["options"];
+    delete data.options;
     return data;
 }
 
@@ -179,6 +179,22 @@ QUnit.test("Week Numbers", function(assert) {
                  "Week number in the middle of the year");
     assert.equal(week[1].getTime(), (createUTCDate(2019, 2, 17)).getTime(),
                  "Week number in the middle of the year");
+    week = BlockPuzzle.dateStringToDate("w11/2019");
+    assert.equal(week[0].getTime(), (createUTCDate(2019, 2, 11)).getTime(),
+                 "Week number in the middle of the year");
+    assert.equal(week[1].getTime(), (createUTCDate(2019, 2, 17)).getTime(),
+                 "Week number in the middle of the year");
+
+    week = BlockPuzzle.dateStringToDate("w11/2019");
+    assert.equal(week[0].getTime(), (createUTCDate(2019, 2, 11)).getTime(),
+                 "Lower-case week number strings also supported");
+    assert.equal(week[1].getTime(), (createUTCDate(2019, 2, 17)).getTime(),
+                 "Lower-case week number strings also supported");
+    week = BlockPuzzle.dateStringToDate("w11/2019");
+    assert.equal(week[0].getTime(), (createUTCDate(2019, 2, 11)).getTime(),
+                 "Lower-case week number strings also supported");
+    assert.equal(week[1].getTime(), (createUTCDate(2019, 2, 17)).getTime(),
+                 "Lower-case week number strings also supported");
 });
 
 QUnit.test("dateStringToDate", function(assert) {
@@ -190,6 +206,9 @@ QUnit.test("dateStringToDate", function(assert) {
     assert.equal(BlockPuzzle.dateStringToDate("Q1/2012")[0].getTime(),
                  (createUTCDate(2012, 0, 1)).getTime(),
                  "Simple quarter.");
+    assert.equal(BlockPuzzle.dateStringToDate("q1/2012")[0].getTime(),
+                 (createUTCDate(2012, 0, 1)).getTime(),
+                 "Simple quarter with lower-case letter.");
     assert.equal(BlockPuzzle.dateStringToDate("12/2012")[0].getTime(),
                  (createUTCDate(2012, 11, 1)).getTime(),
                  "Simple month date.");
@@ -228,10 +247,20 @@ QUnit.test("dateRangeToDates", function(assert) {
                          createUTCDate(2001, 2, 31),
                          "Simple quarter.");
 
+    assertValidDateRange(BlockPuzzle.dateRangeToDates("q1/2001"),
+                         createUTCDate(2001, 0, 1),
+                         createUTCDate(2001, 2, 31),
+                         "Simple quarter with lower-case letter.");
+
     assertValidDateRange(BlockPuzzle.dateRangeToDates("Q1/2001-Q1/2001"),
                          createUTCDate(2001, 0, 1),
                          createUTCDate(2001, 2, 31),
                          "Quarter range.");
+
+    assertValidDateRange(BlockPuzzle.dateRangeToDates("Q1/2001-q1/2001"),
+                         createUTCDate(2001, 0, 1),
+                         createUTCDate(2001, 2, 31),
+                         "Quarter range with mixed-case letters.");
 
     assertValidDateRange(BlockPuzzle.dateRangeToDates("02/2001-05/2001"),
                          createUTCDate(2001, 1, 1),
@@ -258,6 +287,11 @@ QUnit.test("dateRangeToDates", function(assert) {
                          createUTCDate(2002, 5, 30),
                          "Half range.");
 
+    assertValidDateRange(BlockPuzzle.dateRangeToDates("h1/2001-h1/2002"),
+                         createUTCDate(2001, 0, 1),
+                         createUTCDate(2002, 5, 30),
+                         "Half range with lower-case letters.");
+
     assertValidDateRange(BlockPuzzle.dateRangeToDates("2001"),
                          createUTCDate(2001, 0, 1),
                          createUTCDate(2001, 11, 31),
@@ -274,6 +308,7 @@ QUnit.test("dateRangeToDates", function(assert) {
                          "Odd range.");
 
     assert.strictEqual(BlockPuzzle.dateRangeToDates("Q1"), null, "Invalid quarter string");
+    assert.strictEqual(BlockPuzzle.dateRangeToDates("q1"), null, "Invalid quarter string");
 });
 
 QUnit.test("Canvas.hoursStringtoHours", function(assert) {
